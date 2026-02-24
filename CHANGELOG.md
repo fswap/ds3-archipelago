@@ -2,6 +2,9 @@
 
 * Enable the DLC by default.
 
+* Don't allow a player to disable DLC and still require that they beat a DLC
+  boss.
+
 * Fix the "Painted World of Ariandel End Boss" victory condition.
 
 ## 4.0.0-rc.3
