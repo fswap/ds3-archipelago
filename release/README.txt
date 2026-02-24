@@ -45,10 +45,16 @@ This release stands on the shoulders of many people who have worked tirelessly t
 
 * ModEngine3 by grayttierney and numerous others, which not only makes the "static" randomizer possible in the first place but also makes it easy to combine mods in creative ways.
 
-* The `fromsoftware-rs` library by vswarte, axd1x8a, and dasaav, which provides important utilities for hooking and interacting with the game.
+* The `fromsoftware-rs` library by vswarte, axd1x8a, dasaav, and others, which provides important utilities for hooking and interacting with the game.
 
 * All the incredible and thankless reverse engineering, documentation, and tooling work done by countless people at The Grand Archives, in the ?ServerName? discord, and across the internet.
 
-* Debugging help and coding assistance from members of the Archipelago discord server, particularly Exempt-Medic and eldsmith.
+* Debugging help, coding assistance, and patches from members of the Archipelago discord server, particularly Exempt-Medic and eldsmith.
 
-* All the members of the DS3 Archipelago Discord channel who provide tireless support for the users of this package, most particularly SeesawEffect.
+* The fswap code review team, particularly Paperkoopa who is keen of eye and swift of foot.
+
+* All the members of the DS3 Archipelago Discord channel who provide tireless support for the users of this mod, most particularly SeesawEffect.
+
+* Everyone who has playtested a build and sent feedback, without which the extreme finitude of my competence would be far more apparent.
+
+* The players who've just played this mod for fun. All of this is for you.
