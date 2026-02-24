@@ -1,5 +1,7 @@
 ## 4.0.0-rc.4
 
+* Enable the DLC by default.
+
 * Fix the "Painted World of Ariandel End Boss" victory condition.
 
 ## 4.0.0-rc.3
