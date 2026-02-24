@@ -1,5 +1,7 @@
 ## 4.0.0-rc.4
 
+* Enable the DLC by default.
+
 * Don't allow a player to disable DLC and still require that they beat a DLC
   boss.
 
