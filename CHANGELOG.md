@@ -7,6 +7,8 @@
 
 * Fix the "Painted World of Ariandel End Boss" victory condition.
 
+* Fix some cases where item smoothing could cause invalid item placements. 
+
 ## 4.0.0-rc.3
 
 * Fix a bug where logs were being displayed in reverse order in the overlay.
