@@ -9,6 +9,9 @@
 
 * Fix some cases where item smoothing could cause invalid item placements. 
 
+* Produce a better error message under Wine/Proton when the room has fallen
+  asleep.
+
 ## 4.0.0-rc.3
 
 * Fix a bug where logs were being displayed in reverse order in the overlay.

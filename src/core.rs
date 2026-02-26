@@ -209,8 +209,11 @@ impl Core {
                 Error(err) if err.is_fatal() => {
                     let err = self.connection.err();
                     self.log(
-                        if matches!(err, ap::Error::WebSocket(tungstenite::Error::Io(io))
-                                         if io.kind() == io::ErrorKind::ConnectionRefused)
+                        if let ap::Error::WebSocket(tungstenite::Error::Io(io)) = err
+                            && matches!(
+                                io.kind(),
+                                io::ErrorKind::ConnectionRefused | io::ErrorKind::TimedOut
+                            )
                         {
                             vec![
                                 ap::RichText::Color {
