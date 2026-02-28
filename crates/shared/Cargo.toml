@@ -1,29 +1,30 @@
 [package]
-name = "ds3-archipelago"
-version = "4.0.0-rc.3"
+name = "shared"
+version = "0.0.0"
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
 readme = false
 
-[lib]
-crate-type = ["cdylib"]
-name = "ds3_archipelago"
-
 [dependencies]
 anyhow.workspace = true
 archipelago_rs.workspace = true
-bincode.workspace = true
-darksouls3 = { git = "https://github.com/vswarte/fromsoftware-rs" }
-darksouls3-extra = "0.1.0"
+backtrace = "0.3.76"
+bitflags = "2.11.0"
+chrono = "0.4.42"
+clipboard-win = "5.4.1"
 fromsoftware-shared.workspace = true
 hudhook.workspace = true
-ilhook.workspace = true
+imgui = { version = "0.12", features = ["docking", "tables-api"] }
+imgui-sys = "0.12.0"
 json.workspace = true
 log.workspace = true
+mint = "0.5.9"
 regex-macro.workspace = true
 regex.workspace = true
 serde.workspace = true
 serde_repr.workspace = true
-shared.workspace = true
+simplelog = "0.12.2"
+tungstenite = "0.28.0"
 windows.workspace = true
+windows-result = "0.4.1"

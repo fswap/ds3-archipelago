@@ -341,12 +341,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9330f8b2ff13f34540b44e946ef35111825727b38d33286ef986142615121801"
 
 [[package]]
-name = "chlorine"
-version = "1.0.13"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c00d31b1d19317b4777ec879192d3745bd97d05262b4b19cb1dda284b9d22f19"
-
-[[package]]
 name = "chrono"
 version = "0.4.44"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -579,29 +573,20 @@ version = "4.0.0-rc.3"
 dependencies = [
  "anyhow",
  "archipelago_rs",
- "backtrace",
  "bincode",
- "chrono",
- "clipboard-win",
  "darksouls3 0.13.0",
  "darksouls3-extra",
  "fromsoftware-shared 0.13.0",
  "hudhook",
  "ilhook",
- "imgui",
- "imgui-sys",
  "log",
- "mint",
- "pelite",
  "regex",
  "regex-macro",
  "serde",
  "serde_json",
  "serde_repr",
- "simplelog",
- "tungstenite",
+ "shared",
  "windows",
- "windows-result 0.4.1",
 ]
 
 [[package]]
@@ -994,8 +979,7 @@ dependencies = [
 [[package]]
 name = "imgui"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "8addafa5cecf0515812226e806913814e02ce38d10215778082af5174abe5669"
+source = "git+https://github.com/imgui-rs/imgui-rs#3c869cb2b1bcf91114417ed13c34ac98c76b719c"
 dependencies = [
  "bitflags 1.3.2",
  "cfg-if",
@@ -1007,12 +991,10 @@ dependencies = [
 [[package]]
 name = "imgui-sys"
 version = "0.12.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ead193f9f4b60398e8b8f4ab1483e2321640d87aeebdaa3e5f44c55633ccd804"
+source = "git+https://github.com/imgui-rs/imgui-rs#3c869cb2b1bcf91114417ed13c34ac98c76b719c"
 dependencies = [
  "cc",
  "cfg-if",
- "chlorine",
  "mint",
 ]
 
@@ -1671,6 +1653,33 @@ dependencies = [
  "cfg-if",
  "cpufeatures",
  "digest",
+]
+
+[[package]]
+name = "shared"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "archipelago_rs",
+ "backtrace",
+ "bitflags 2.11.0",
+ "chrono",
+ "clipboard-win",
+ "fromsoftware-shared 0.13.0",
+ "hudhook",
+ "imgui",
+ "imgui-sys",
+ "log",
+ "mint",
+ "regex",
+ "regex-macro",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "simplelog",
+ "tungstenite",
+ "windows",
+ "windows-result 0.4.1",
 ]
 
 [[package]]
