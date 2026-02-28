@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/ds3-archipelago",
+    "crates/sdt-archipelago",
     "crates/shared",
 ]
 
@@ -14,7 +15,7 @@ repository = "https://github.com/fswap/fromsoftware-archipelago"
 anyhow = "1.0.100"
 archipelago_rs = "1.0.0"
 bincode = "2.0.1"
-fromsoftware-shared = { git = "https://github.com/vswarte/fromsoftware-rs" }
+fromsoftware-shared = { git = "https://github.com/fswap/fromsoftware-rs", branch = "sdt-tasks" }
 hudhook = "0.8.1"
 ilhook = {version = "2.3.0", features = ["x64"]}
 json = { package = "serde_json", version = "1.0.145" }

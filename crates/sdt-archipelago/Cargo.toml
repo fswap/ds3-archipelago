@@ -1,6 +1,6 @@
 [package]
-name = "ds3-archipelago"
-version = "4.0.0-rc.3"
+name = "sdt-archipelago"
+version = "0.0.0"
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
@@ -8,14 +8,13 @@ readme = false
 
 [lib]
 crate-type = ["cdylib"]
-name = "ds3_archipelago"
+name = "sdt_archipelago"
 
 [dependencies]
 anyhow.workspace = true
 archipelago_rs.workspace = true
 bincode.workspace = true
-darksouls3 = { git = "https://github.com/fswap/fromsoftware-rs", branch = "merged" }
-darksouls3-extra = "0.1.0"
+sekiro = { git = "https://github.com/fswap/fromsoftware-rs", branch = "sdt-tasks" }
 fromsoftware-shared.workspace = true
 hudhook.workspace = true
 ilhook.workspace = true

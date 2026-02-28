@@ -449,7 +449,7 @@ dependencies = [
  "bitfield",
  "cxx-stl 3.4.0",
  "encoding_rs",
- "fromsoftware-shared 0.12.0",
+ "fromsoftware-shared 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "pelite",
  "regex",
  "serde",
@@ -461,14 +461,15 @@ dependencies = [
 
 [[package]]
 name = "darksouls3"
-version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+version = "0.12.0"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks#811997d6b5a1538e8bd5381e48480c0e9bb93493"
 dependencies = [
  "bitfield",
  "cxx-stl 4.4.0",
  "encoding_rs",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
  "pelite",
+ "regex",
  "serde",
  "serde_derive",
  "thiserror 1.0.69",
@@ -483,8 +484,8 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8fec68c565cd9e94073f1c3f13754001dc937737f0bb54820e2cebf54c301d8"
 dependencies = [
  "bitflags 2.11.0",
- "darksouls3 0.12.0",
- "fromsoftware-shared 0.12.0",
+ "darksouls3 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "fromsoftware-shared 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "ilhook",
  "pelite",
  "thiserror 1.0.69",
@@ -574,9 +575,9 @@ dependencies = [
  "anyhow",
  "archipelago_rs",
  "bincode",
- "darksouls3 0.13.0",
+ "darksouls3 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
  "darksouls3-extra",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
  "hudhook",
  "ilhook",
  "log",
@@ -706,7 +707,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "c175c296b9d827c839de32a0d9107d6420d1e145175189a7f6957ce4d1506348"
 dependencies = [
  "from-singleton",
- "fromsoftware-shared-macros 0.12.0",
+ "fromsoftware-shared-macros 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "glam",
  "pelite",
  "thiserror 1.0.69",
@@ -717,11 +718,11 @@ dependencies = [
 
 [[package]]
 name = "fromsoftware-shared"
-version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+version = "0.12.0"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks#811997d6b5a1538e8bd5381e48480c0e9bb93493"
 dependencies = [
  "from-singleton",
- "fromsoftware-shared-macros 0.13.0",
+ "fromsoftware-shared-macros 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
  "glam",
  "pelite",
  "thiserror 1.0.69",
@@ -744,8 +745,8 @@ dependencies = [
 
 [[package]]
 name = "fromsoftware-shared-macros"
-version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+version = "0.12.0"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks#811997d6b5a1538e8bd5381e48480c0e9bb93493"
 dependencies = [
  "inflections",
  "proc-macro2",
@@ -1531,6 +1532,27 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
+name = "sdt-archipelago"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "archipelago_rs",
+ "bincode",
+ "fromsoftware-shared 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
+ "hudhook",
+ "ilhook",
+ "log",
+ "regex",
+ "regex-macro",
+ "sekiro",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "shared",
+ "windows",
+]
+
+[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1551,6 +1573,23 @@ checksum = "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "sekiro"
+version = "0.12.0"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks#811997d6b5a1538e8bd5381e48480c0e9bb93493"
+dependencies = [
+ "bitfield",
+ "cxx-stl 4.4.0",
+ "encoding_rs",
+ "fromsoftware-shared 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
+ "pelite",
+ "serde",
+ "serde_derive",
+ "thiserror 1.0.69",
+ "vtable-rs",
+ "windows",
 ]
 
 [[package]]
@@ -1665,7 +1704,7 @@ dependencies = [
  "bitflags 2.11.0",
  "chrono",
  "clipboard-win",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.12.0 (git+https://github.com/fswap/fromsoftware-rs?branch=sdt-tasks)",
  "hudhook",
  "imgui",
  "imgui-sys",
