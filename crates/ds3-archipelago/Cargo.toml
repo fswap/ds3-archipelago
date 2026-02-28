@@ -1,0 +1,50 @@
+[package]
+name = "ds3-archipelago"
+version = "4.0.0-rc.3"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+readme = false
+
+[lib]
+crate-type = ["cdylib"]
+name = "ds3_archipelago"
+
+[dependencies]
+anyhow = "1.0.100"
+archipelago_rs = "1.0.0"
+backtrace = "0.3.76"
+bincode = "2.0.1"
+chrono = "0.4.42"
+clipboard-win = "5.4.1"
+darksouls3 = { git = "https://github.com/vswarte/fromsoftware-rs" }
+fromsoftware-shared = { git = "https://github.com/vswarte/fromsoftware-rs" }
+darksouls3-extra = "0.1.0"
+hudhook = "0.8.1"
+ilhook = {version = "2.3.0", features = ["x64"]}
+imgui = { version = "0.12", features = ["docking", "tables-api"] }
+imgui-sys = "0.12.0"
+json = { package = "serde_json", version = "1.0.145" }
+log = "0.4.29"
+mint = "0.5.9"
+pelite = "0.10"
+regex = "1.12.3"
+regex-macro = "0.3.0"
+serde = { version = "1.0.228", features = ["derive"] }
+serde_repr = "0.1.20"
+simplelog = "0.12.2"
+tungstenite = "0.28.0"
+windows-result = "0.4.1"
+
+[dependencies.windows]
+version = "0.54"
+features = [
+    "Win32_Foundation",
+    "Win32_System_ProcessStatus",
+    "Win32_System_SystemServices",
+    "Win32_UI_WindowsAndMessaging",
+]
+
+[patch.crates-io]
+imgui = { git = "https://github.com/imgui-rs/imgui-rs" }
+imgui-sys = { git = "https://github.com/imgui-rs/imgui-rs" }

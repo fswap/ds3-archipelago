@@ -2,12 +2,12 @@ name: Release
 
 on:
   push:
-    tags: ['v*.*.*']
+    tags: ['ds3-v*.*.*']
 
 env:
   # The prefix for tags that belong to the current stable release of the DS3
   # mod.
-  STABLE_TAG_PREFIX_PREFIX: 'refs/tags/v4.0.'
+  STABLE_TAG_PREFIX_PREFIX: 'refs/tags/ds3-v4.0.'
 
   # The minimum version of Archipelago known to work with our apworld.
   REQUIRED_AP_VERSION: 0.6.6
@@ -23,13 +23,13 @@ jobs:
     - id: version
       run: |
         ver="${{ github.ref_name }}"
-        if [[ "$ver" == v* ]]; then
+        if [[ "$ver" == ds3-v* ]]; then
           ver="${ver:1}"
         fi
         echo "version=$ver" >> "$GITHUB_OUTPUT"
     - id: prerelease
       run: |
-        if [[ "${{ github.ref_name }}" == *-* ]]; then
+        if [[ "${{ github.ref_name }}" == ds3-*-* ]]; then
           echo "prerelease=true" >> "$GITHUB_OUTPUT"
         else
           echo "prerelease=false" >> "$GITHUB_OUTPUT"
@@ -61,7 +61,7 @@ jobs:
     - uses: actions/upload-artifact@v4
       with:
         name: archipelago.dll
-        path: target/release/archipelago.dll
+        path: target/release/ds3_archipelago.dll
         if-no-files-found: error
 
   build-static:

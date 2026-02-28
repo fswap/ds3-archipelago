@@ -1,38 +1,43 @@
 ## Making contributions
 
-Contributions are generally welcome, but it's a good idea to chat about them [in
-the Archipelago Discord] before writing a bunch of code. Coming up with the
-right design takes time, discussion, and collaboration.
+Contributions are generally welcome, but it's a good idea to chat about them in
+the Archipelago Discord before writing a bunch of code. Coming up with the right
+design takes time, discussion, and collaboration. We discuss active and future
+games in the following channels:
 
-[in the Archipelago Discord]: https://discord.com/channels/731205301247803413/1005246392329052220
+* [Dark Souls III](https://discord.com/channels/731205301247803413/1005246392329052220)
+* [Sekiro](https://discord.com/channels/1085716850370957462/1100511247939686481) (18+ only)
+* [Elden Ring](https://discord.com/channels/731205301247803413/1114277493311033494)
 
-## Building the client
+## Building a client
 
-All you need to build the client is itself is an up-to-date [Rust] installation.
+All you need to build a client is itself is an up-to-date [Rust] installation.
 Run `cargo build` and it will download all the dependencies and compile the
-client DLL to `target/debug/archipelago.dll`.
+client DLL to `target/debug/ds3_archipelago.dll`. (The name of the DLL will vary
+based on which game you're building; we'll assume you're working on Dark Souls
+III throughout this guide.)
 
 [Rust]: https://rust-lang.org/
 
 ## Using your local client
 
-To use the client, download [the latest release] from GitHub and extract it.
-Edit the `me3-config.toml` file and look for
+To use a client, download [the latest release] for the game you're working on
+from GitHub and extract it. Edit the `me3-config.toml` file and look for
 
 [the latest release]: https://github.com/fswap/ds3-archipelago/releases
 
 ```toml
 [[natives]]
-path = "archipelago.dll"
+path = "ds3_archipelago.dll"
 ```
 
-Replace `archipelago.dll` with the absolute path of your
-`target/debug/archipelago.dll` file. Make sure to use forward slahes, because
-backslashes will be interpreted as string escapes. Mine looks like this:
+Replace `ds3_archipelago.dll` with the absolute path of your
+`target/debug/ds3_archipelago.dll` file. Make sure to use forward slahes,
+because backslashes will be interpreted as string escapes. Mine looks like this:
 
 ```toml
 [[natives]]
-path = "d:/Natalie/Code/ds3-archipelago/target/debug/archipelago.dll"
+path = "d:/Natalie/Code/ds3-archipelago/target/debug/ds3_archipelago.dll"
 ```
 
 Run `launch-ds3-local.bat` as normal and it'll use your local DLL.
