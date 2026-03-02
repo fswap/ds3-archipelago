@@ -1,0 +1,30 @@
+[package]
+name = "shared"
+version = "0.0.0"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+readme = false
+
+[dependencies]
+anyhow.workspace = true
+archipelago_rs.workspace = true
+backtrace = "0.3.76"
+bitflags = "2.11.0"
+chrono = "0.4.42"
+clipboard-win = "5.4.1"
+fromsoftware-shared.workspace = true
+hudhook.workspace = true
+imgui = { version = "0.12", features = ["docking", "tables-api"] }
+imgui-sys = "0.12.0"
+json.workspace = true
+log.workspace = true
+mint = "0.5.9"
+regex-macro.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_repr.workspace = true
+simplelog = "0.12.2"
+tungstenite = "0.28.0"
+windows.workspace = true
+windows-result = "0.4.1"

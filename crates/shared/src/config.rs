@@ -60,19 +60,17 @@ impl Config {
         self.url = url.as_ref().to_string()
     }
 
-    /// Returns the slot that the config was created with, or None if it
-    /// doesn't contain a slot.
+    /// Returns the slot that the config was created with.
     pub fn slot(&self) -> &str {
         self.slot.as_str()
     }
 
-    /// Returns the seed that the config was created with, or None if it
-    /// doesn't contain a seed.
+    /// Returns the seed that the config was created with.
     pub fn seed(&self) -> &str {
         self.seed.as_str()
     }
 
-    /// Returns the version of DS3Randomizer.exe that the config was created
+    /// Returns the version of the static randomizer that the config was created
     /// with, or None if it doesn't contain a version (such as for a local
     /// randomizer build).
     pub fn client_version(&self) -> Option<&str> {

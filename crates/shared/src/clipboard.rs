@@ -3,7 +3,7 @@ use imgui::ClipboardBackend;
 
 /// A backend that uses the Windows clipboard to implement clipboard access for
 /// imgui.
-pub struct WindowsClipboardBackend {}
+pub(crate) struct WindowsClipboardBackend {}
 
 impl ClipboardBackend for WindowsClipboardBackend {
     fn get(&mut self) -> Option<String> {

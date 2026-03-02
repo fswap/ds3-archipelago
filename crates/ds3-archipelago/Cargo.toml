@@ -1,0 +1,29 @@
+[package]
+name = "ds3-archipelago"
+version = "4.0.0-rc.3"
+edition.workspace = true
+repository.workspace = true
+license.workspace = true
+readme = false
+
+[lib]
+crate-type = ["cdylib"]
+name = "ds3_archipelago"
+
+[dependencies]
+anyhow.workspace = true
+archipelago_rs.workspace = true
+bincode.workspace = true
+darksouls3 = { git = "https://github.com/vswarte/fromsoftware-rs" }
+darksouls3-extra = "0.1.0"
+fromsoftware-shared.workspace = true
+hudhook.workspace = true
+ilhook.workspace = true
+json.workspace = true
+log.workspace = true
+regex-macro.workspace = true
+regex.workspace = true
+serde.workspace = true
+serde_repr.workspace = true
+shared.workspace = true
+windows.workspace = true

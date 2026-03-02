@@ -1,15 +1,13 @@
-use std::{mem, ptr, str::FromStr};
+use std::{marker::PhantomData, mem, ptr};
 
 use archipelago_rs::{self as ap, RichText, TextColor};
-use darksouls3::sprj::{EventFlag, MapItemMan, MenuMan, SprjEventFlagMan};
-use fromsoftware_shared::FromStatic;
 use hudhook::RenderContext;
 use imgui::*;
 use imgui_sys::igSetWindowFocus_Str;
 use log::*;
 use regex_macro::regex;
 
-use crate::core::Core;
+use crate::{Core, Game};
 
 mod text_input_history;
 
@@ -27,8 +25,7 @@ const MAGENTA: ImColor32 = ImColor32::from_rgb(0xBF, 0x9B, 0xBC);
 const CYAN: ImColor32 = ImColor32::from_rgb(0x34, 0xE2, 0xE2);
 
 /// The visual overlay that appears on top of the game.
-#[derive(Default)]
-pub struct Overlay {
+pub struct Overlay<G: Game> {
     /// The last-known size of the viewport. This is only set once hudhook has
     /// been initialized and the viewport has a non-zero size.
     viewport_size: Option<[f32; 2]>,
@@ -78,22 +75,41 @@ pub struct Overlay {
     /// The size of the main overlay window in the previous frame. Used to
     /// resize when entering and exiting compact mode.
     previous_size: Option<[f32; 2]>,
+
+    /// This allows us to associate a [Game] with the overlay as a whole rather
+    /// than having to pass it to each method.
+    _marker: PhantomData<G>,
 }
 
 // Safety: The sole Overlay instance is owned by Hudhook, which only ever
-// interacts with it during frame rendering. We know DS3 frame rendering always
-// happens on the main thread, and never in parallel, so synchronization is not
-// a real concern.
-unsafe impl Sync for Overlay {}
+// interacts with it during frame rendering. We know the games' frame rendering
+// always happens on the main thread, and never in parallel, so synchronization
+// is not a real concern.
+unsafe impl<G: Game> Sync for Overlay<G> {}
 
-impl Overlay {
+impl<G: Game> Overlay<G> {
     /// Creates a new instance of the overlay and the core mod logic.
     pub fn new() -> Self {
         Self {
             font_scale: 1.8,
             unfocused_window_opacity: 0.4,
             was_compact_mode: true,
-            ..Default::default()
+
+            // Default values. We can't use [Default::default] because G doesn't
+            // require `Default`.
+            viewport_size: None,
+            popup_url: Default::default(),
+            say_input: Default::default(),
+            say_history: Default::default(),
+            log_was_scrolled_down: false,
+            logs_emitted: 0,
+            frames_since_new_logs: 0,
+            settings_window_visible: false,
+            was_main_menu: false,
+            was_window_focused: false,
+            focus_say_input_next_frame: false,
+            previous_size: None,
+            _marker: PhantomData,
         }
     }
 
@@ -101,7 +117,7 @@ impl Overlay {
     ///
     /// We don't store `core` directly in the overlay so that we can ensure that
     /// its mutex is only locked once per render.
-    pub fn render(&mut self, ui: &mut Ui, core: &mut Core) {
+    pub fn render(&mut self, ui: &mut Ui, core: &mut G::Core) {
         self.render_main_window(ui, core);
         self.render_settings_window(ui);
     }
@@ -125,7 +141,7 @@ impl Overlay {
     }
 
     /// Render the primary overlay window and any popups it opens.
-    fn render_main_window(&mut self, ui: &Ui, core: &mut Core) {
+    fn render_main_window(&mut self, ui: &Ui, core: &mut G::Core) {
         let Some(viewport_size) = self.viewport_size else {
             return;
         };
@@ -139,7 +155,7 @@ impl Overlay {
             // Also defocus the window any time the player loads into the game.
             // This ensures that controller players don't have to mess with the
             // keyboard and mouse just to get the overlay unfocused.
-            (self.was_main_menu && !self.is_main_menu())
+            (self.was_main_menu && unsafe { !G::is_main_menu() })
         {
             unsafe { igSetWindowFocus_Str(ptr::null()) };
         }
@@ -159,7 +175,7 @@ impl Overlay {
             .window(format!(
                 "Archipelago Client {} [{}]###ap-client-overlay",
                 env!("CARGO_PKG_VERSION"),
-                match core.connection_state_type() {
+                match core.base().connection_state_type() {
                     ap::ConnectionStateType::Connected => "Connected",
                     ap::ConnectionStateType::Connecting => "Connecting...",
                     ap::ConnectionStateType::Disconnected => "Disconnected",
@@ -203,7 +219,7 @@ impl Overlay {
                 ui.separator();
                 self.render_log_window(ui, core);
                 if !is_compact_mode {
-                    if core.is_disconnected() {
+                    if core.base().is_disconnected() {
                         self.render_connection_buttons(ui, core);
                     } else {
                         self.render_say_input(ui, core, focus_say_input);
@@ -217,7 +233,7 @@ impl Overlay {
             })
             .is_none();
 
-        self.was_main_menu = self.is_main_menu();
+        self.was_main_menu = unsafe { G::is_main_menu() };
         self.was_compact_mode = is_compact_mode;
 
         if collapsed {
@@ -227,7 +243,7 @@ impl Overlay {
 
     /// Renders the modal popup which queries the player for connection
     /// information.
-    fn render_url_modal_popup(&mut self, ui: &Ui, core: &mut Core) {
+    fn render_url_modal_popup(&mut self, ui: &Ui, core: &mut G::Core) {
         ui.modal_popup_config("#url-modal-popup")
             .title_bar(false)
             .collapsible(false)
@@ -245,7 +261,7 @@ impl Overlay {
                 ui.disabled(self.popup_url.is_empty(), || {
                     if ui.button("Connect") {
                         ui.close_current_popup();
-                        if let Err(e) = core.update_url(&self.popup_url) {
+                        if let Err(e) = core.base_mut().update_url(&self.popup_url) {
                             error!("Failed to save config: {e}");
                         }
                     }
@@ -304,20 +320,20 @@ impl Overlay {
 
     /// Renders the buttons that allow the player to reconnect to Archipelago.
     /// These take the place of the text box when the client is disconnected.
-    fn render_connection_buttons(&mut self, ui: &Ui, core: &mut Core) {
+    fn render_connection_buttons(&mut self, ui: &Ui, core: &mut G::Core) {
         if ui.button("Reconnect") {
-            core.reconnect();
+            core.base_mut().reconnect();
         }
 
         ui.same_line();
         if ui.button("Change URL") {
             ui.open_popup("#url-modal-popup");
-            core.config().url().clone_into(&mut self.popup_url);
+            core.base().config().url().clone_into(&mut self.popup_url);
         }
     }
 
     /// Renders the log window which displays all the prints sent from the server.
-    fn render_log_window(&mut self, ui: &Ui, core: &Core) {
+    fn render_log_window(&mut self, ui: &Ui, core: &G::Core) {
         let style = ui.clone_style();
 
         let scrollbar_bg_opacity = if self.was_window_focused { 1.0 } else { 0.0 };
@@ -342,7 +358,7 @@ impl Overlay {
             .always_vertical_scrollbar(true)
             .always_horizontal_scrollbar(!is_compact_mode)
             .build(|| {
-                let logs = core.logs();
+                let logs = core.base().logs();
                 if logs.len() != self.logs_emitted {
                     self.frames_since_new_logs = 0;
                     self.logs_emitted = logs.len();
@@ -362,8 +378,8 @@ impl Overlay {
                             | AdminCommandResult { .. }
                             | Unknown { .. } => 0xff,
                             ItemSend { item, .. } | ItemCheat { item, .. } | Hint { item, .. }
-                                if core.config().slot() == item.receiver().name()
-                                    || core.config().slot() == item.sender().name() =>
+                                if core.base().config().slot() == item.receiver().name()
+                                    || core.base().config().slot() == item.sender().name() =>
                             {
                                 0xFF
                             }
@@ -381,7 +397,7 @@ impl Overlay {
     /// Renders the text box in which users can write chats to the server.
     ///
     /// If `focus` is true, this forces the input to be in focus.
-    fn render_say_input(&mut self, ui: &Ui, core: &mut Core, focus: bool) {
+    fn render_say_input(&mut self, ui: &Ui, core: &mut G::Core, focus: bool) {
         ui.disabled(core.client().is_none(), || {
             let arrow_button_width = ui.frame_height(); // Arrow buttons are square buttons.
             let style = ui.clone_style();
@@ -414,146 +430,25 @@ impl Overlay {
 
     /// Handles a command from the player, falling back to sending it to the
     /// server.
-    fn say(&mut self, message: String, core: &mut Core) {
+    fn say(&mut self, message: String, core: &mut G::Core) {
         let Some(captures) = regex!("^(![^ ]+)( +)?(.*)?$").captures(message.trim()) else {
             let _ = core.client_mut().unwrap().say(message);
             return;
         };
 
         let command = captures.get(1).unwrap().as_str();
-
-        let arg = || -> Option<&str> { Some(captures.get(3)?.as_str()) };
-
-        let mut arg_error = |usage: &str| {
-            core.log(vec![
-                RichText::Color {
-                    text: format!("Invalid {}.", command),
-                    color: ap::TextColor::Red,
-                },
-                " Usage:\n".into(),
-                usage.into(),
-            ]);
-        };
-
-        match command {
-            "!getevent" => {
-                let Some(flag) = arg().and_then(|f| u32::from_str(f).ok()) else {
-                    arg_error("!getevent EVENT_FLAG");
-                    return;
-                };
-
-                let Ok(flag) = EventFlag::try_from(flag) else {
-                    core.log(RichText::Color {
-                        text: format!("Invalid event ID: {}", flag),
-                        color: ap::TextColor::Red,
-                    });
-                    return;
-                };
-
-                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
-                    core.log(RichText::Color {
-                        text: "SprjEventFlagMan not loaded".into(),
-                        color: ap::TextColor::Red,
-                    });
-                    return;
-                };
-
-                let value = events.get_flag(flag);
-                core.log(vec![
-                    "Event ".into(),
-                    RichText::Color {
-                        // TODO: Use `u32::from()` once EventFlag supports it
-                        text: format!("{:?}", unsafe { mem::transmute::<EventFlag, u32>(flag) }),
-                        color: ap::TextColor::Blue,
-                    },
-                    ": ".into(),
-                    RichText::Color {
-                        text: format!("{:?}", value),
-                        color: if value {
-                            ap::TextColor::Green
-                        } else {
-                            ap::TextColor::Red
-                        },
-                    },
-                ]);
-            }
-
-            #[cfg(debug_assertions)]
-            "!setevent" => {
-                let Some((flag, value)) = arg().and_then(|a| {
-                    let args = regex!(" +").split(a).collect::<Vec<_>>();
-                    if args.len() == 2 {
-                        Some((u32::from_str(args[0]).ok()?, bool::from_str(args[1]).ok()?))
-                    } else {
-                        None
-                    }
-                }) else {
-                    arg_error("!setevent EVENT_FLAG BOOL");
-                    return;
-                };
-
-                let Ok(flag) = EventFlag::try_from(flag) else {
-                    core.log(RichText::Color {
-                        text: format!("Invalid event ID: {}", flag),
-                        color: ap::TextColor::Red,
-                    });
-                    return;
-                };
-
-                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
-                    core.log(RichText::Color {
-                        text: "SprjEventFlagMan not loaded".into(),
-                        color: ap::TextColor::Red,
-                    });
-                    return;
-                };
-
-                events.set_flag(flag, value);
-                core.log(vec![
-                    "Set event ".into(),
-                    RichText::Color {
-                        // TODO: Use `u32::from()` once EventFlag supports it
-                        text: format!("{:?}", unsafe { mem::transmute::<EventFlag, u32>(flag) }),
-                        color: ap::TextColor::Blue,
-                    },
-                    " to ".into(),
-                    RichText::Color {
-                        text: format!("{:?}", value),
-                        color: if value {
-                            ap::TextColor::Green
-                        } else {
-                            ap::TextColor::Red
-                        },
-                    },
-                ]);
-            }
-
-            _ => {
-                let _ = core.client_mut().unwrap().say(message);
-            }
+        let arg = captures.get(3).map(|c| c.as_str());
+        if !core.handle_command(command, arg) {
+            let _ = core.client_mut().unwrap().say(message);
         }
     }
 
     /// Returns whether the overlay is currently in "compact mode", where the
     /// bottommost widgets are not rendered.
-    fn is_compact_mode(&self, core: &Core) -> bool {
-        if core.is_disconnected() {
-            // When the connection is inactive, always show the buttons to
-            // reconnect.
-            false
-        } else if let Ok(menu_man) = unsafe { MenuMan::instance() } {
-            !menu_man.is_menu_mode() && !self.is_main_menu()
-        } else {
-            true
-        }
-    }
-
-    /// Returns whether the game is currently on the main menu.
-    fn is_main_menu(&self) -> bool {
-        // If MapItemMan isn't available, that usually means we're on the
-        // main menu. There's probably a better way to detect that but we
-        // don't know it yet.
-        unsafe { MapItemMan::instance() }.is_err()
+    fn is_compact_mode(&self, core: &G::Core) -> bool {
+        // When the connection is inactive, always show the buttons to
+        // reconnect.
+        !core.base().is_disconnected() && unsafe { !G::is_menu_open() }
     }
 }
 

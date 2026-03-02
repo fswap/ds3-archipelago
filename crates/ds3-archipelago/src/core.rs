@@ -1,53 +1,32 @@
-use std::collections::{HashSet, VecDeque};
+use std::collections::HashSet;
 use std::time::{Duration, Instant, SystemTime};
-use std::{io, iter::ExactSizeIterator, mem};
+use std::{mem, str::FromStr};
 
-use anyhow::{Error, Result, bail};
-use archipelago_rs as ap;
+use anyhow::{Result, bail};
+use archipelago_rs::{self as ap, RichText};
 use darksouls3::{app_menu::*, cs::*, param::*, sprj::*};
-use fromsoftware_shared::{FromStatic, InstanceResult, Superclass};
+use fromsoftware_shared::{FromStatic, Superclass};
 use log::*;
+use regex_macro::regex;
 
 use crate::item::{EquipParamExt, ItemIdExt};
+use crate::save_data::*;
 use crate::slot_data::{DeathLinkOption, I64Key, SlotData};
-use crate::{config::Config, save_data::*};
+use shared::{Core as SharedCore, CoreBase};
 
-/// The maximum number of log messages to store.
-///
-/// This is relatively low because imgui is not very efficient about not
-/// rendering the offscreen messages every frame, which can cause real slowdown
-/// over long runs with chatty connections.
-const LOG_BUFFER_LIMIT: usize = 200;
+/// The grace period after either sending or receiving a death link during which
+/// no further death links will be sent or received.
+const DEATH_LINK_GRACE_PERIOD: Duration = Duration::from_secs(30);
 
 /// The core of the Archipelago mod. This is responsible for running the
 /// non-UI-related game logic and interacting with the Archieplago client.
 pub struct Core {
-    /// The configuration for the current Archipelago connection. This is not
-    /// guaranteed to be complete *or* accurate; it's the mod's responsibility
-    /// to ensure it makes sense before actually interacting with an individual
-    /// game.
-    config: Config,
-
-    /// The log of prints displayed in the overlay.
-    log_buffer: VecDeque<ap::Print>,
-
-    /// The Archipelago client connection.
-    connection: ap::Connection<SlotData>,
-
-    /// Events we're waiting to process until the player loads a save. This is
-    /// always empty unless a connection is connected and the player is on the
-    /// main menu (or in the initial waiting period during a load).
-    event_buffer: Vec<ap::Event>,
+    /// The cross-game core.
+    base: CoreBase<SlotData>,
 
     /// The time we last granted an item to the player. Used to ensure we don't
     /// give more than one item per second.
     last_item_time: Instant,
-
-    /// The time at which we noticed the game loading (as indicated by
-    /// MapItemMan coming into existence). Used to compute the grace period
-    /// before we start doing stuff in game. None if the game is not currently
-    /// loaded.
-    load_time: Option<Instant>,
 
     /// The number of locations sent to the server in this session. This always
     /// starts at 0 when the player boots the game again to ensure that they
@@ -68,229 +47,40 @@ pub struct Core {
     /// so that it's resent every time the player starts the game, just in case
     /// it got lost in transit.
     sent_goal: bool,
-
-    /// The fatal error that this has encountered, if any. If this is not
-    /// `None`, most in-game processing will be disabled.
-    error: Option<Error>,
 }
 
-/// The grace period between MapItemMan starting to exist and the mod beginning
-/// to take actions.
-const GRACE_PERIOD: Duration = Duration::from_secs(10);
+impl shared::Core for Core {
+    type SlotData = SlotData;
 
-/// The grace period after either sending or receiving a death link during which
-/// no further death links will be sent or received.
-const DEATH_LINK_GRACE_PERIOD: Duration = Duration::from_secs(30);
-
-impl Core {
     /// Creates a new instance of the mod.
-    pub fn new() -> Result<Self> {
-        let config = Config::load()?;
-        let connection = Self::new_connection(&config);
+    fn new() -> Result<Self> {
         Ok(Self {
-            config,
-            connection,
-            event_buffer: vec![],
-            log_buffer: Default::default(),
+            base: CoreBase::new()?,
             last_item_time: Instant::now(),
-            load_time: None,
             locations_sent: 0,
             shop_items_hinted: Default::default(),
             last_death_link: Instant::now(),
             sent_goal: false,
-            error: None,
         })
     }
 
-    /// Creates a new [ClientConnection] based on the connection information in [config].
-    fn new_connection(config: &Config) -> ap::Connection<SlotData> {
-        let mut options = ap::ConnectionOptions::new()
-            .receive_items(ap::ItemHandling::OtherWorlds {
-                own_world: false,
-                starting_inventory: true,
-            })
-            .tags(vec!["DeathLink"]);
-        if let Some(password) = config.password() {
-            options = options.password(password);
-        }
-
-        ap::Connection::new(config.url(), "Dark Souls III", config.slot(), options)
+    fn base(&self) -> &CoreBase<SlotData> {
+        &self.base
     }
 
-    /// Returns the current connection type.
-    pub fn connection_state_type(&self) -> ap::ConnectionStateType {
-        self.connection.state_type()
-    }
-
-    /// Returns whether the current connection is disconnected.
-    pub fn is_disconnected(&self) -> bool {
-        self.connection.is_disconnected()
-    }
-
-    /// Returns the current user config.
-    pub fn config(&self) -> &Config {
-        &self.config
-    }
-
-    /// Retries the Archipelago connection with the same information.
-    pub fn reconnect(&mut self) {
-        if self.connection_state_type() == ap::ConnectionStateType::Disconnected {
-            self.log("Reconnecting...");
-        }
-
-        self.connection = Self::new_connection(&self.config);
-    }
-
-    /// Updates the URL to use to connect to Archipelago and reconnects the
-    /// Archipelago session.
-    pub fn update_url(&mut self, url: impl AsRef<str>) -> Result<()> {
-        if self.connection_state_type() == ap::ConnectionStateType::Disconnected {
-            self.log("Reconnecting...");
-        }
-
-        self.config.set_url(url);
-        self.config.save()?;
-        self.connection = Self::new_connection(&self.config);
-        Ok(())
-    }
-
-    /// Returns a reference to the Archipelago client, if it's connected.
-    pub fn client(&self) -> Option<&ap::Client<SlotData>> {
-        self.connection.client()
-    }
-
-    /// Returns a mutable reference to the Archipelago client, if it's connected.
-    pub fn client_mut(&mut self) -> Option<&mut ap::Client<SlotData>> {
-        self.connection.client_mut()
-    }
-
-    /// Returns the list of all logs that have been emitted in the current
-    /// session.
-    pub fn logs(&self) -> impl ExactSizeIterator<Item = &ap::Print> {
-        self.log_buffer.iter()
-    }
-
-    /// Runs the core logic of the mod. This may set [error], which should be
-    /// surfaced to the user.
-    pub fn update(&mut self) {
-        self.update_always();
-        if let Err(err) = self.update_live() {
-            self.error = Some(err);
-        }
-    }
-
-    /// If this client has encountered a fatal error, takes ownership of it.
-    pub fn take_error(&mut self) -> Option<Error> {
-        if let Some(err) = self.error.take() {
-            self.error = Some(ap::Error::Elsewhere.into());
-            Some(err)
-        } else {
-            None
-        }
-    }
-
-    /// Updates the Archipelago connection, adds any events that need processing
-    /// to [event_buffer].
-    ///
-    /// This is always run regardless of whether the client is connected or the
-    /// mod has experienced a fatal error.
-    fn update_always(&mut self) {
-        use ap::Event::*;
-        let mut state = self.connection.state_type();
-        let mut events = self.connection.update();
-
-        // Process events that should happen even when the player isn't in an
-        // active save.
-        for event in events.extract_if(.., |e| matches!(e, Connected | Error(_) | Print(_))) {
-            match event {
-                Connected => {
-                    state = ap::ConnectionStateType::Connected;
-                }
-                Error(err) if err.is_fatal() => {
-                    let err = self.connection.err();
-                    self.log(
-                        if let ap::Error::WebSocket(tungstenite::Error::Io(io)) = err
-                            && matches!(
-                                io.kind(),
-                                io::ErrorKind::ConnectionRefused | io::ErrorKind::TimedOut
-                            )
-                        {
-                            vec![
-                                ap::RichText::Color {
-                                    text: "Connection refused. ".into(),
-                                    color: ap::TextColor::Red,
-                                },
-                                "Make sure the server session is running and the URL is \
-                                 up-to-date."
-                                    .into(),
-                            ]
-                        } else if state == ap::ConnectionStateType::Connected {
-                            vec![
-                                ap::RichText::Color {
-                                    text: "Connection failed: ".into(),
-                                    color: ap::TextColor::Red,
-                                },
-                                err.to_string().into(),
-                            ]
-                        } else {
-                            vec![
-                                ap::RichText::Color {
-                                    text: "Disconnected: ".into(),
-                                    color: ap::TextColor::Red,
-                                },
-                                err.to_string().into(),
-                            ]
-                        },
-                    );
-                    self.event_buffer.clear();
-                }
-                Error(err) => self.log(err.to_string()),
-                Print(print) => {
-                    info!("[APS] {print}");
-                    if self.log_buffer.len() >= LOG_BUFFER_LIMIT {
-                        self.log_buffer.pop_front();
-                    }
-                    self.log_buffer.push_back(print);
-                }
-                _ => {}
-            }
-        }
-
-        if state == ap::ConnectionStateType::Connected {
-            self.event_buffer.extend(events);
-        } else {
-            debug_assert!(self.event_buffer.is_empty());
-        }
+    fn base_mut(&mut self) -> &mut CoreBase<SlotData> {
+        &mut self.base
     }
 
     /// Updates the game logic and checks for common errors. This does nothing
     /// if we're not currently connected to the Archipelago server or if the mod
     /// has encountered a fatal error.
     fn update_live(&mut self) -> Result<()> {
-        if self.connection.client().is_none() || self.error.is_some() {
-            return Ok(());
-        }
-
-        let item_man = unsafe { MapItemMan::instance() };
-        if item_man.is_err() {
-            self.load_time = None;
-        } else if self.load_time.is_none() {
-            self.load_time = Some(Instant::now());
-        }
-
-        if let Some(time) = self.load_time
-            && time.elapsed() < GRACE_PERIOD
-        {
-            return Ok(());
-        }
-
-        self.check_version_conflict()?;
-
         self.check_seed_conflict()?;
         if let Some(save_data) = SaveData::instance_mut().as_mut()
             && save_data.seed.is_none()
         {
-            save_data.seed = Some(self.config.seed().to_string());
+            save_data.seed = Some(self.seed().to_string());
         };
 
         self.check_dlc_error()?;
@@ -298,14 +88,14 @@ impl Core {
         // Process events that should only happen when the player has a save
         // loaded and is actively playing.
         use ap::Event::*;
-        for event in mem::take(&mut self.event_buffer) {
+        for event in self.take_events() {
             if let DeathLink { source, time, .. } = event {
                 self.receive_death_link(source, time)
             }
         }
 
         self.send_death_link()?;
-        self.process_incoming_items(&item_man);
+        self.process_incoming_items();
         self.process_inventory_items()?;
         self.send_shop_hints()?;
         self.handle_goal()?;
@@ -313,40 +103,142 @@ impl Core {
         Ok(())
     }
 
-    /// Returns an error if the user's static randomizer version doesn't match
-    /// this mod's version.
-    fn check_version_conflict(&self) -> Result<()> {
-        if let Some(client_version) = self.config().client_version()
-            && client_version != env!("CARGO_PKG_VERSION")
-        {
-            bail!(
-                "Your apconfig.json was generated using static randomizer v{}, but this client is \
-                 v{}. Re-run the static randomizer with the current version.",
-                client_version,
-                env!("CARGO_PKG_VERSION"),
-            );
-        } else {
-            Ok(())
+    /// Implementors may override this to handles custom command inputs via the
+    /// say console. Returns whether a command was handled.
+    ///
+    /// By default, this doesn't handle any commands.
+    fn handle_command(&mut self, command: &str, arg: Option<&str>) -> bool {
+        let mut arg_error = |usage: &str| {
+            self.log(vec![
+                RichText::Color {
+                    text: format!("Invalid {}.", command),
+                    color: ap::TextColor::Red,
+                },
+                " Usage:\n".into(),
+                usage.into(),
+            ]);
+        };
+
+        match command {
+            "!getevent" => {
+                let Some(flag) = arg.and_then(|f| u32::from_str(f).ok()) else {
+                    arg_error("!getevent EVENT_FLAG");
+                    return true;
+                };
+
+                let Ok(flag) = EventFlag::try_from(flag) else {
+                    self.log(RichText::Color {
+                        text: format!("Invalid event ID: {}", flag),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
+                    self.log(RichText::Color {
+                        text: "SprjEventFlagMan not loaded".into(),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let value = events.get_flag(flag);
+                self.log(vec![
+                    "Event ".into(),
+                    RichText::Color {
+                        // TODO: Use `u32::from()` once EventFlag supports it
+                        text: format!("{:?}", unsafe { mem::transmute::<EventFlag, u32>(flag) }),
+                        color: ap::TextColor::Blue,
+                    },
+                    ": ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", value),
+                        color: if value {
+                            ap::TextColor::Green
+                        } else {
+                            ap::TextColor::Red
+                        },
+                    },
+                ]);
+
+                true
+            }
+
+            #[cfg(debug_assertions)]
+            "!setevent" => {
+                let Some((flag, value)) = arg.and_then(|a| {
+                    let args = regex!(" +").split(a).collect::<Vec<_>>();
+                    if args.len() == 2 {
+                        Some((u32::from_str(args[0]).ok()?, bool::from_str(args[1]).ok()?))
+                    } else {
+                        None
+                    }
+                }) else {
+                    arg_error("!setevent EVENT_FLAG BOOL");
+                    return true;
+                };
+
+                let Ok(flag) = EventFlag::try_from(flag) else {
+                    self.log(RichText::Color {
+                        text: format!("Invalid event ID: {}", flag),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
+                    self.log(RichText::Color {
+                        text: "SprjEventFlagMan not loaded".into(),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                events.set_flag(flag, value);
+                self.log(vec![
+                    "Set event ".into(),
+                    RichText::Color {
+                        // TODO: Use `u32::from()` once EventFlag supports it
+                        text: format!("{:?}", unsafe { mem::transmute::<EventFlag, u32>(flag) }),
+                        color: ap::TextColor::Blue,
+                    },
+                    " to ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", value),
+                        color: if value {
+                            ap::TextColor::Green
+                        } else {
+                            ap::TextColor::Red
+                        },
+                    },
+                ]);
+
+                true
+            }
+
+            _ => false,
         }
     }
+}
 
+impl Core {
     /// Returns an error if there's a conflict between the notion of the current
     /// seed in the server, the save, and/or the config. Also updates the save
     /// data's notion based on whatever is available if it doesn't exist yet.
     fn check_seed_conflict(&mut self) -> Result<()> {
-        let client_seed = self.connection.client().map(|c| c.seed_name());
+        let client_seed = self.client().map(|c| c.seed_name());
         let save = SaveData::instance();
         let save_seed = save.as_ref().and_then(|s| s.seed.as_ref());
 
         match (client_seed, save_seed) {
-            (Some(client_seed), _) if client_seed != self.config.seed() => bail!(
+            (Some(client_seed), _) if client_seed != self.seed() => bail!(
                 "You've connected to a different Archipelago multiworld than the one that \
                  DS3Randomizer.exe used!\n\
                  \n\
 		 Connected room seed: {}\n\
                  DS3Randomizer.exe seed: {}",
                 client_seed,
-                self.config.seed()
+                self.seed()
             ),
             (Some(client_seed), Some(save_seed)) if client_seed != save_seed => bail!(
                 "You've connected to a different Archipelago multiworld than the one that \
@@ -357,13 +249,13 @@ impl Core {
                 client_seed,
                 save_seed
             ),
-            (_, Some(save_seed)) if self.config.seed() != save_seed => bail!(
+            (_, Some(save_seed)) if self.seed() != save_seed => bail!(
                 "Your most recent DS3Randomizer.exe invocation connected to a different \
                  Archipealgo multiworld than the one that you used before with this save!\n\
                  \n\
                  DS3Randomizer.exe seed: {}\n\
                  Save file seed: {}",
-                self.config.seed(),
+                self.seed(),
                 save_seed
             ),
             _ => Ok(()),
@@ -379,7 +271,7 @@ impl Core {
             // happens, but for now we just wait to indicate an error until
             // they're actually in a game.
             (unsafe { MapItemMan::instance() }).is_ok() &&
-            self.connection.client().is_some_and(|c|
+            self.client().is_some_and(|c|
             c.slot_data().options.enable_dlc)
             && (!dlc.dlc1_installed || !dlc.dlc2_installed)
         {
@@ -400,11 +292,11 @@ impl Core {
 
     /// Handle new items, distributing them to the player when appropriate. This
     /// also initializes the [SaveData] for a new file.
-    fn process_incoming_items(&mut self, item_man: &InstanceResult<&mut MapItemMan>) {
-        let Some(client) = self.connection.client() else {
+    fn process_incoming_items(&mut self) {
+        let Some(client) = self.client() else {
             return;
         };
-        let Ok(item_man) = item_man else {
+        let Ok(item_man) = (unsafe { MapItemMan::instance() }) else {
             return;
         };
         let Ok(player_game_data) = (unsafe { PlayerGameData::instance() }) else {
@@ -415,11 +307,8 @@ impl Core {
             return;
         };
 
-        // Wait a second between each item grant, and 10 seconds after we load
-        // in before we start granting items at all.
-        if self.last_item_time.elapsed().as_secs() < 1
-            || self.load_time.is_none_or(|i| i.elapsed().as_secs() < 10)
-        {
+        // Wait a second between each item grant.
+        if self.last_item_time.elapsed().as_secs() < 1 {
             return;
         }
 
@@ -542,8 +431,8 @@ impl Core {
             game_data_man.remove_item(id, 1);
         }
 
-        if let Some(client) = self.connection.client_mut()
-            && save_data.locations.len() > self.locations_sent
+        if save_data.locations.len() > self.locations_sent
+            && let Some(client) = self.client_mut()
         {
             client.mark_checked(save_data.locations.iter().copied())?;
             self.locations_sent = save_data.locations.len();
@@ -557,7 +446,6 @@ impl Core {
             return;
         }
         if self
-            .connection
             .client()
             .is_none_or(|c| c.this_player().name() == source)
         {
@@ -584,9 +472,6 @@ impl Core {
     /// If a shop is currently open, send all its locations as hints to the
     /// server.
     fn send_shop_hints(&mut self) -> Result<()> {
-        let Some(client) = self.connection.client_mut() else {
-            return Ok(());
-        };
         let Ok(regulation_manager) = (unsafe { CSRegulationManager::instance() }) else {
             return Ok(());
         };
@@ -611,7 +496,9 @@ impl Core {
                     .archipelago_location_id()
             })
             .collect::<Vec<_>>();
-        if !locations.is_empty() {
+        if !locations.is_empty()
+            && let Some(client) = self.client_mut()
+        {
             info!("Hinting location IDs: {:?}", locations);
             client.create_hints(locations)?;
         }
@@ -623,7 +510,7 @@ impl Core {
         if !self.allow_death_link() {
             return Ok(());
         }
-        let Some(client) = self.connection.client_mut() else {
+        let Some(client) = self.client_mut() else {
             return Ok(());
         };
         let Ok(player) = (unsafe { PlayerIns::instance() }) else {
@@ -669,7 +556,7 @@ impl Core {
     /// Returns whether death links (sending or receiving) are currently
     /// allowed.
     fn allow_death_link(&self) -> bool {
-        let Some(client) = self.connection.client() else {
+        let Some(client) = self.client() else {
             return false;
         };
 
@@ -678,10 +565,10 @@ impl Core {
     }
 
     /// Detects when the player has won the game and notifies the server.
-    pub fn handle_goal(&mut self) -> Result<()> {
+    fn handle_goal(&mut self) -> Result<()> {
         if let Ok(event_man) = (unsafe { SprjEventFlagMan::instance() })
-            && let Some(client) = self.connection.client_mut()
             && !self.sent_goal
+            && let Some(client) = self.client_mut()
             && client
                 .slot_data()
                 .goal
@@ -693,18 +580,5 @@ impl Core {
         }
 
         Ok(())
-    }
-
-    /// Writes a message to the log buffer that we display to the user in the
-    /// overlay, as well as to the internal logger.
-    pub fn log(&mut self, message: impl Into<ap::Print>) {
-        let print = message.into();
-        info!("[APC] {print}");
-        // Consider making this a circular buffer if it ends up eating too much
-        // memory over time.
-        if self.log_buffer.len() >= LOG_BUFFER_LIMIT {
-            self.log_buffer.pop_front();
-        }
-        self.log_buffer.push_back(print);
     }
 }

@@ -1,32 +1,26 @@
 use std::sync::{Arc, Mutex};
 
+use anyhow::{Error, Result};
 use hudhook::{ImguiRenderLoop, RenderContext};
 use imgui::*;
 
-use anyhow::{Error, Result};
-use darksouls3::sprj::MenuMan;
-use darksouls3_extra::input::{InputBlocker, InputFlags};
-use fromsoftware_shared::FromStatic;
-
-use crate::{
-    Core, clipboard_backend::WindowsClipboardBackend, overlay::Overlay, utils::PopupModalExt,
-};
+use crate::{Core, Game, InputBlocker, InputFlags, overlay::Overlay, utils::PopupModalExt};
 
 /// A wrapper around the rest of the mod's UI that doesn't expect any state to
 /// exist. This allows the full [Overlay] to assume that its [Core] exists while
 /// still using Hudhook and ImGui to surface fatal errors that may occur during
 /// initialization.
-pub struct ErrorDisplay {
+pub(crate) struct ErrorDisplay<G: Game> {
     /// The struct that's used to block and unblock input going to DS3.
-    input_blocker: &'static InputBlocker,
+    input_blocker: G::InputBlocker,
 
     /// The main overlay if it managed to initialize correctly, or [None]
     /// otherwise.
-    overlay: Option<Overlay>,
+    overlay: Option<Overlay<G>>,
 
     /// The core game logic. Used to extract fatal errors to display to the
     /// user.
-    core: Option<Arc<Mutex<Core>>>,
+    core: Option<Arc<Mutex<G::Core>>>,
 
     /// A fatal error to display. Once set, this can't be changed, even if other
     /// fatal errors are detected later.
@@ -36,9 +30,9 @@ pub struct ErrorDisplay {
     show_full_error: bool,
 }
 
-impl ErrorDisplay {
+impl<G: Game> ErrorDisplay<G> {
     /// Creates a new [ErrorDisplay] that will only ever be run
-    pub fn new(core: Result<Arc<Mutex<Core>>>, input_blocker: &'static InputBlocker) -> Self {
+    pub fn new(core: Result<Arc<Mutex<G::Core>>>, input_blocker: G::InputBlocker) -> Self {
         match core {
             Ok(core) => Self {
                 input_blocker,
@@ -58,7 +52,7 @@ impl ErrorDisplay {
     }
 }
 
-impl ImguiRenderLoop for ErrorDisplay {
+impl<G: Game> ImguiRenderLoop for ErrorDisplay<G> {
     fn render(&mut self, ui: &mut Ui) {
         let io = ui.io();
         let mut flag = InputFlags::empty();
@@ -82,7 +76,7 @@ impl ImguiRenderLoop for ErrorDisplay {
             }
 
             if self.error.is_none() {
-                self.error = core.take_error();
+                self.error = core.base_mut().take_error();
             }
         }
 
@@ -90,8 +84,10 @@ impl ImguiRenderLoop for ErrorDisplay {
 
         // Make sure the cursor is visible even if the player is loaded into a
         // save with the menu closed.
-        if let Ok(man) = unsafe { MenuMan::instance() } {
-            man.set_menu_mode(true);
+        //
+        // Safety: This is only ever run on the main thread.
+        unsafe {
+            G::force_cursor_visible();
         }
 
         unsafe {
@@ -126,7 +122,7 @@ impl ImguiRenderLoop for ErrorDisplay {
     }
 
     fn initialize<'a>(&'a mut self, ctx: &mut Context, _render_context: &'a mut dyn RenderContext) {
-        ctx.set_clipboard_backend(WindowsClipboardBackend {});
+        ctx.set_clipboard_backend(crate::clipboard::WindowsClipboardBackend {});
     }
 
     fn before_render<'a>(
