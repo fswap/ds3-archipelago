@@ -1,7 +1,8 @@
 ## 4.1.0-alpha.5
 
-* Make all remaining missable invasions unmissable, except for Creighton the
-  Wanderer who still depends on Sirris's (currently-missable) quest.
+* Make all remaining missable invasions unmissable.
+
+* Make Sirris's and Hodrick's quests unmissable.
 
 * Make Leonhard's quest unmissable when `unmissable_quests` is enabled.
 
