@@ -2,6 +2,8 @@
 
 * Enable the DLC by default.
 
+* Add `All Bosses`, `Base Game Bosses`, and `DLC Bosses` as goal options.
+
 * Don't allow a player to disable DLC and still require that they beat a DLC
   boss.
 
