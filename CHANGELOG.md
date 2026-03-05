@@ -2,9 +2,8 @@
 
 * Make all remaining missable invasions unmissable.
 
-* Make Sirris's and Hodrick's quests unmissable.
-
-* Make Leonhard's quest unmissable when `unmissable_quests` is enabled.
+* Make Sirris's, Hodrick's, Leonhard's, and Hawkwood's quests unmissable when
+  `unmissable_quests` is enabled.
 
 * Properly mark `FS: Crystal Hail - Ludleth for Sage` and `FS: Deep Soul -
   Ludleth for Deacons` as unmissable when unmissable transposition is active, as
@@ -12,6 +11,18 @@
 
 * Fix a bug where Karla wouldn't teleport away from Irithyll Dungeon in
   unmissable mode.
+
+* Rename `US: Heavy Gem - Hawkwood` to `FS: Heavy Gem - Hawkwood` to reflect
+  where the item is actually received.
+
+* No longer require collecting the vanilla `Twinkling Dragon Torso Stone` to
+  trigger Hawkwood leaving Firelink Shrine. Rename `FS: Hawkwood's Swordgrass -
+  Andre after gesture in AP summit` to `FS: Hawkwood's Swordgrass - Andre`
+  accordingly. Move it and `FK: Twinkling Dragon Head Stone - Hawkwood drop` to
+  the Farron Keep region for the same reason.
+
+* Mark `FS: Hawkwood's Swordgrass - Andre` as missable when `unmissable_quests`
+  is disabled since killing Hawkwood can lock the player out of the check.
 
 ## 4.1.0-alpha.4
 
