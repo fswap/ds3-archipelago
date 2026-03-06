@@ -26,6 +26,10 @@
 * Mark `FS: Hawkwood's Swordgrass - Andre` as missable when `unmissable_quests`
   is disabled since killing Hawkwood can lock the player out of the check.
 
+* Mark both `CD: ... - Heysel Corpse-Grub in Rosaria's Bed Chamber` locations as
+  unmissable and hidden and document their triggers. In unmissable invasions
+  mode, these won't spawn until both Heysel invasions have been defeated.
+
 ## 4.1.0-alpha.4
 
 * Make Karla's, Siegward's, and Patches's quests unmissable when
