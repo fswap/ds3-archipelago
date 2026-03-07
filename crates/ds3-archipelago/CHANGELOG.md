@@ -1,3 +1,7 @@
+## 4.0.0-rc.7
+
+* Use the latest `archipelago_rs` package.
+
 ## 4.0.0-rc.6
 
 * Fix a null reference error in DS3Randomizer.exe.

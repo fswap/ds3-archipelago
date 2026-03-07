@@ -83,7 +83,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
             options = options.password(password);
         }
 
-        ap::Connection::new(config.url(), game, config.slot(), options)
+        ap::Connection::new(config.url(), game, Some(config.slot()), options)
     }
 
     /// Returns the current connection type.
