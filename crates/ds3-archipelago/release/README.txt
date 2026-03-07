@@ -13,7 +13,7 @@ This package contains the static randomizer and the DS3 mod for integrating _Dar
 
 You can also check out [the changelog] for information about the changes in the latest randomizer release.
 
-[the changelog]: https://github.com/fswap/ds3-archipelago/blob/main/CHANGELOG.md
+[the changelog]: https://github.com/fswap/ds3-archipelago/blob/main/crates/ds3-archipelago/CHANGELOG.md
 
 ## Differences from 3.x.x
 
