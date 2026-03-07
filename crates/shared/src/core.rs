@@ -6,6 +6,7 @@ use anyhow::{Error, Result, bail};
 use archipelago_rs as ap;
 use log::*;
 use serde::de::DeserializeOwned;
+use ustr::Ustr;
 
 use crate::config::Config;
 
@@ -22,6 +23,9 @@ const GRACE_PERIOD: Duration = Duration::from_secs(10);
 
 /// The base struct for implementations of [Core].
 pub struct CoreBase<S: DeserializeOwned + Send + 'static> {
+    /// The name of the game that's being played.
+    game: Ustr,
+
     /// The configuration for the current Archipelago connection. This is not
     /// guaranteed to be complete *or* accurate; it's the mod's responsibility
     /// to ensure it makes sense before actually interacting with an individual
@@ -52,10 +56,12 @@ pub struct CoreBase<S: DeserializeOwned + Send + 'static> {
 
 impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
     /// Creates a new instance of [CoreBase].
-    pub fn new() -> Result<Self> {
+    pub fn new(game: impl Into<Ustr>) -> Result<Self> {
+        let game = game.into();
         let config = Config::load()?;
-        let connection = Self::new_connection(&config);
+        let connection = Self::new_connection(game, &config);
         Ok(Self {
+            game,
             config,
             connection,
             log_buffer: Default::default(),
@@ -66,7 +72,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
     }
 
     /// Creates a new [ClientConnection] based on the connection information in [config].
-    fn new_connection(config: &Config) -> ap::Connection<S> {
+    fn new_connection(game: Ustr, config: &Config) -> ap::Connection<S> {
         let mut options = ap::ConnectionOptions::new()
             .receive_items(ap::ItemHandling::OtherWorlds {
                 own_world: false,
@@ -77,7 +83,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
             options = options.password(password);
         }
 
-        ap::Connection::new(config.url(), "Dark Souls III", config.slot(), options)
+        ap::Connection::new(config.url(), game, config.slot(), options)
     }
 
     /// Returns the current connection type.
@@ -96,7 +102,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
             self.log("Reconnecting...");
         }
 
-        self.connection = Self::new_connection(&self.config);
+        self.connection = Self::new_connection(self.game, &self.config);
     }
 
     /// Updates the URL to use to connect to Archipelago and reconnects the
@@ -108,7 +114,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
 
         self.config.set_url(url);
         self.config.save()?;
-        self.connection = Self::new_connection(&self.config);
+        self.connection = Self::new_connection(self.game, &self.config);
         Ok(())
     }
 

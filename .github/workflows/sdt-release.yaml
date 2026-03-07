@@ -1,0 +1,259 @@
+name: Release
+
+on:
+  push:
+    tags: ['sdt-v*.*.*']
+
+env:
+  # The minimum version of Archipelago known to work with our apworld.
+  REQUIRED_AP_VERSION: 0.6.6
+
+jobs:
+  version:
+    runs-on: ubuntu-latest
+
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      prerelease: ${{ steps.prerelease.outputs.prerelease }}
+    steps:
+    - id: version
+      run: |
+        ver="${{ github.ref_name }}"
+        if [[ "$ver" == sdt-v* ]]; then
+          ver="${ver:1}"
+        fi
+        echo "version=$ver" >> "$GITHUB_OUTPUT"
+    - id: prerelease
+      run: |
+        if [[ "${{ github.ref_name }}" == sdt-*-* ]]; then
+          echo "prerelease=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "prerelease=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  build-mod:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Cache
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/bin/
+          ~/.cargo/registry/index/
+          ~/.cargo/registry/cache/
+          ~/.cargo/git/db/
+        key: ${{ runner.os }}-cargo-${{ hashFiles('Cargo.lock') }}
+
+    - uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: x86_64-pc-windows-msvc
+    - uses: Swatinem/rust-cache@v2
+
+    - run: cargo build --release
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: archipelago.dll
+        path: target/release/sdt_archipelago.dll
+        if-no-files-found: error
+
+  build-static:
+    runs-on: windows-latest
+    needs: [version]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/SoulsRandomizers
+        ref: archipelago
+        token: ${{ secrets.GH_TOKEN }}
+        path: SoulsRandomizers
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/SoulsIds
+        ref: event-id
+        path: SoulsIds
+    - uses: actions/checkout@v4
+      with:
+        repository: thefifthmatt/SoulsFormats
+        ref: dsms
+        path: SoulsFormats
+    - uses: microsoft/setup-msbuild@v2
+    - uses: actions/checkout@v4
+      with:
+        repository: thefifthmatt/yet-another-tab-control
+        path: yet-another-tab-control
+
+    - name: Install dependencies
+      run: dotnet restore SoulsRandomizers\SoulsRandomizers.sln
+
+    - name: Build randomizer
+      run: dotnet publish -o standard -c 'Release (Archipelago)' .\SoulsRandomizers\SekiroRandomizer\SekiroRandomizer.csproj
+      env:
+        SDT_AP_VERSION: ${{ needs.version.outputs.version }}
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: SekiroRandomizer.exe
+        path: standard\SekiroRandomizer.exe
+        if-no-files-found: error
+
+  build-yaml:
+    runs-on: ubuntu-latest
+    needs: [version]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/Archipelago
+        token: ${{ secrets.GH_TOKEN }}
+        ref: sekiro
+        fetch-depth: 0
+
+    - uses: mikefarah/yq@v4.52.4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: 3.11
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest pytest-subtests pytest-xdist
+        python ModuleUpdate.py --yes --force --append "WebHostLib/requirements.txt"
+
+    - name: Generate YAML
+      run: |
+        python Launcher.py 'Generate Template Options'
+        mv 'Players/Templates/Sekiro Shadows Die Twice.yaml' 'Sekiro Options Template.yaml'
+        yq --inplace '.requires.version = strenv(REQUIRED_AP_VERSION)' 'Sekiro Options Template.yaml'
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: Sekiro Options Template.yaml
+        path: Sekiro Options Template.yaml
+        if-no-files-found: error
+
+  build-zip:
+    runs-on: ubuntu-latest
+    needs: [version, build-mod, build-static, build-yaml]
+    env:
+      dir: Sekiro Archipelago ${{ needs.version.outputs.version }}
+
+    steps:
+    - uses: actions/checkout@v4
+      with: {path: client}
+
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/SoulsRandomizers
+        ref: archipelago
+        path: SoulsRandomizers
+
+    - name: Download ModEngine3
+      run: |
+        curl -L https://github.com/garyttierney/me3/releases/download/v0.10.1/me3-windows-amd64.zip > me3-windows.zip
+        curl -L https://github.com/garyttierney/me3/releases/download/v0.10.1/me3-linux-amd64.tar.gz > me3-linux.tar.gz
+
+    - run: unzip -d me3-windows me3-windows.zip
+
+    - name: Download Archipelago repo
+      run: |
+        curl -L "https://github.com/fswap/Archipelago/archive/refs/heads/sekiro.tar.gz" | tar xz
+        cd Archipelago-*/worlds
+        zip -r ../../sekiro.apworld sekiro
+
+    - name: Assemble Windows release
+      run: |
+        mkdir "$dir"
+        cp -r client/crates/sdt-archipelago/release/* "$dir"
+        mkdir -p "$dir"/randomizer/spoiler_logs
+        mv SoulsRandomizers/dist "$dir/randomizer/dist"
+        mv "$dir/randomizer/dist/Presets" "$dir/randomizer/presets"
+        mv "$dir/randomizer/dist/Base/script" "$dir/randomizer/script"
+        mv "$dir/randomizer/dist/Base/sfx" "$dir/randomizer/sfx"
+        mv me3-windows/CHANGELOG.pdf "$dir/ME3-CHANGELOG.pdf"
+        mv me3-windows/LICENSE-APACHE "$dir/ME3-LICENSE-APACHE"
+        mv me3-windows/LICENSE-MIT "$dir/ME3-LICENSE-MIT"
+        mv sekiro.apworld "$dir"
+
+        # Windows-specific
+        mv me3-windows/bin "$dir/bin"
+        rm "$dir/launch-sekiro.sh"
+
+    - name: Download archipelago.dll
+      uses: actions/download-artifact@v4
+      with:
+        name: archipelago.dll
+        path: ${{ env.dir }}
+
+    - name: Download YAML
+      uses: actions/download-artifact@v4
+      with:
+        name: Sekiro Options Template.yaml
+        path: ${{ env.dir }}
+
+    - name: Download SekiroRandomizer.exe
+      uses: actions/download-artifact@v4
+      with:
+        name: SekiroRandomizer.exe
+        path: ${{ env.dir }}/randomizer
+
+    - name: Zip release
+      run: |
+        cd "$dir"
+        zip -r ../"${{ env.dir }}-windows.zip" .
+
+    - run: tar xzf me3-linux.tar.gz --one-top-level=me3-linux
+
+    - name: Assemble Linux release
+      run: |
+        cp -r client/crates/sdt-archipelago/release/* "$dir"
+        rm "$dir/launch-sekiro.bat"
+        rm -r "$dir/bin"
+        mv me3-linux/bin "$dir/bin"
+
+    - run: tar czf "${{ env.dir }}-linux.tar.gz" "$dir"
+
+    - uses: softprops/action-gh-release@v2
+      with:
+        name: "Sekiro Archipelago ${{ needs.version.outputs.version }}"
+        body_path: ${{ env.dir }}/README.txt
+        prerelease: ${{ needs.version.outputs.prerelease }}
+        files: |
+          ${{ env.dir }}-windows.zip
+          ${{ env.dir }}-linux.tar.gz
+        token: ${{ secrets.GH_TOKEN }}
+
+  # Only push tags once everything else builds successfully, so that they don't break redeploys.
+
+  tag-server:
+    runs-on: ubuntu-latest
+    needs: [version, build-zip]
+  
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/Archipelago
+        token: ${{ secrets.GH_TOKEN }}
+        ref: main
+        fetch-depth: 0
+  
+    - run: git tag sdt-${{ needs.version.outputs.version }}
+    - run: git push --tag
+
+  tag-static:
+    runs-on: ubuntu-latest
+    needs: [build-zip]
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        repository: fswap/SoulsRandomizers
+        ref: archipelago
+        token: ${{ secrets.GH_TOKEN }}
+
+    - run: git tag ${{ github.ref_name }}
+    - run: git push --tag

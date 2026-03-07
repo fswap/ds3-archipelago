@@ -2,10 +2,10 @@ use std::collections::HashSet;
 use std::sync::{LazyLock, RwLock, RwLockReadGuard, RwLockWriteGuard};
 
 use bincode::{Decode, Encode};
-use darksouls3::sprj::MapItemMan;
-use darksouls3_extra::save;
 use fromsoftware_shared::FromStatic;
 use log::*;
+use sekiro::sprj::MapItemMan;
+use sekiro_extra::save;
 
 /// The singleton instance of the save data, or None if it hasn't been loaded
 /// from the save file or set explicitly.

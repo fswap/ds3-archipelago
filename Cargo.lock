@@ -462,15 +462,13 @@ dependencies = [
 [[package]]
 name = "darksouls3"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
 dependencies = [
  "bitfield",
  "cxx-stl 4.4.0",
  "encoding_rs",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
  "pelite",
- "serde",
- "serde_derive",
  "thiserror 1.0.69",
  "vtable-rs",
  "windows",
@@ -576,7 +574,7 @@ dependencies = [
  "bincode",
  "darksouls3 0.13.0",
  "darksouls3-extra",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
  "hudhook",
  "ilhook",
  "log",
@@ -700,6 +698,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "fromsoftware-extra-shared"
+version = "0.1.0"
+source = "git+https://github.com/nex3/fromsoftware-extra?branch=sekiro-save#af75c74abf5060eb698769a56b8c2727d34f054d"
+dependencies = [
+ "ilhook",
+]
+
+[[package]]
 name = "fromsoftware-shared"
 version = "0.12.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -718,10 +724,25 @@ dependencies = [
 [[package]]
 name = "fromsoftware-shared"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=merged#5983dd44c5bcd5bcc454986eeeb0a300c772b756"
 dependencies = [
  "from-singleton",
- "fromsoftware-shared-macros 0.13.0",
+ "fromsoftware-shared-macros 0.13.0 (git+https://github.com/fswap/fromsoftware-rs?branch=merged)",
+ "glam",
+ "pelite",
+ "thiserror 1.0.69",
+ "undname",
+ "vtable-rs",
+ "windows",
+]
+
+[[package]]
+name = "fromsoftware-shared"
+version = "0.13.0"
+source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+dependencies = [
+ "from-singleton",
+ "fromsoftware-shared-macros 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
  "glam",
  "pelite",
  "thiserror 1.0.69",
@@ -745,7 +766,18 @@ dependencies = [
 [[package]]
 name = "fromsoftware-shared-macros"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#039c5bcb7f14900d6acfe05bd4a923e83a00e1cd"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=merged#5983dd44c5bcd5bcc454986eeeb0a300c772b756"
+dependencies = [
+ "inflections",
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "fromsoftware-shared-macros"
+version = "0.13.0"
+source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
 dependencies = [
  "inflections",
  "proc-macro2",
@@ -1035,9 +1067,9 @@ checksum = "92ecc6618181def0457392ccd0ee51198e065e016d1d527a7ac1b6dc7c1f09d2"
 
 [[package]]
 name = "js-sys"
-version = "0.3.90"
+version = "0.3.91"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14dc6f6450b3f6d4ed5b16327f38fed626d375a886159ca555bd7822c0c3a5a6"
+checksum = "b49715b7073f385ba4bc528e5747d02e66cb39c6146efb66b781f131f0fb399c"
 dependencies = [
  "once_cell",
  "wasm-bindgen",
@@ -1286,15 +1318,15 @@ checksum = "7a7cf3f8ecebb0f4895f4892a8be0a0dc81b498f9d56735cb769dc31bf00815b"
 
 [[package]]
 name = "pin-project-lite"
-version = "0.2.16"
+version = "0.2.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3b3cff922bd51709b605d9ead9aa71031d81447142d828eb4a6eba76fe619f9b"
+checksum = "a89322df9ebe1c1578d689c92318e070967d1042b512afbe49518723f4e6d5cd"
 
 [[package]]
 name = "piper"
-version = "0.2.4"
+version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "96c8c490f422ef9a4efd2cb5b42b76c8613d7e7dfc1caf667b8a3350a5acc066"
+checksum = "c835479a4443ded371d6c535cbfd8d31ad92c5d23ae9770a61bc155e4992a3c1"
 dependencies = [
  "atomic-waker",
  "fastrand",
@@ -1531,6 +1563,28 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "94143f37725109f92c262ed2cf5e59bce7498c01bcc1502d7b9afe439a4e9f49"
 
 [[package]]
+name = "sdt-archipelago"
+version = "0.0.0"
+dependencies = [
+ "anyhow",
+ "archipelago_rs",
+ "bincode",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "hudhook",
+ "ilhook",
+ "log",
+ "regex",
+ "regex-macro",
+ "sekiro 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "sekiro-extra",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "shared",
+ "windows",
+]
+
+[[package]]
 name = "security-framework"
 version = "3.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1551,6 +1605,55 @@ checksum = "6ce2691df843ecc5d231c0b14ece2acc3efb62c0a398c7e1d875f3983ce020e3"
 dependencies = [
  "core-foundation-sys",
  "libc",
+]
+
+[[package]]
+name = "sekiro"
+version = "0.13.0"
+source = "git+https://github.com/fswap/fromsoftware-rs?branch=merged#5983dd44c5bcd5bcc454986eeeb0a300c772b756"
+dependencies = [
+ "bitfield",
+ "bitflags 2.11.0",
+ "cxx-stl 4.4.0",
+ "encoding_rs",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/fswap/fromsoftware-rs?branch=merged)",
+ "pelite",
+ "serde",
+ "serde_derive",
+ "thiserror 1.0.69",
+ "vtable-rs",
+ "windows",
+]
+
+[[package]]
+name = "sekiro"
+version = "0.13.0"
+source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+dependencies = [
+ "bitfield",
+ "bitflags 2.11.0",
+ "cxx-stl 4.4.0",
+ "encoding_rs",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "pelite",
+ "thiserror 1.0.69",
+ "vtable-rs",
+ "windows",
+]
+
+[[package]]
+name = "sekiro-extra"
+version = "0.1.0"
+source = "git+https://github.com/nex3/fromsoftware-extra?branch=sekiro-save#af75c74abf5060eb698769a56b8c2727d34f054d"
+dependencies = [
+ "bitflags 2.11.0",
+ "fromsoftware-extra-shared",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/fswap/fromsoftware-rs?branch=merged)",
+ "ilhook",
+ "pelite",
+ "sekiro 0.13.0 (git+https://github.com/fswap/fromsoftware-rs?branch=merged)",
+ "thiserror 1.0.69",
+ "windows",
 ]
 
 [[package]]
@@ -1665,7 +1768,7 @@ dependencies = [
  "bitflags 2.11.0",
  "chrono",
  "clipboard-win",
- "fromsoftware-shared 0.13.0",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
  "hudhook",
  "imgui",
  "imgui-sys",
@@ -1678,6 +1781,7 @@ dependencies = [
  "serde_repr",
  "simplelog",
  "tungstenite",
+ "ustr",
  "windows",
  "windows-result 0.4.1",
 ]
@@ -2026,9 +2130,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen"
-version = "0.2.113"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "60722a937f594b7fde9adb894d7c092fc1bb6612897c46368d18e7a20208eff2"
+checksum = "6532f9a5c1ece3798cb1c2cfdba640b9b3ba884f5db45973a6f442510a87d38e"
 dependencies = [
  "cfg-if",
  "once_cell",
@@ -2039,9 +2143,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro"
-version = "0.2.113"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "0fac8c6395094b6b91c4af293f4c79371c163f9a6f56184d2c9a85f5a95f3950"
+checksum = "18a2d50fcf105fb33bb15f00e7a77b772945a2ee45dcf454961fd843e74c18e6"
 dependencies = [
  "quote",
  "wasm-bindgen-macro-support",
@@ -2049,9 +2153,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-macro-support"
-version = "0.2.113"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ab3fabce6159dc20728033842636887e4877688ae94382766e00b180abac9d60"
+checksum = "03ce4caeaac547cdf713d280eda22a730824dd11e6b8c3ca9e42247b25c631e3"
 dependencies = [
  "bumpalo",
  "proc-macro2",
@@ -2062,9 +2166,9 @@ dependencies = [
 
 [[package]]
 name = "wasm-bindgen-shared"
-version = "0.2.113"
+version = "0.2.114"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "de0e091bdb824da87dc01d967388880d017a0a9bc4f3bdc0d86ee9f9336e3bb5"
+checksum = "75a326b8c223ee17883a4251907455a2431acc2791c98c26279376490c378c16"
 dependencies = [
  "unicode-ident",
 ]

@@ -55,7 +55,7 @@ impl shared::Core for Core {
     /// Creates a new instance of the mod.
     fn new() -> Result<Self> {
         Ok(Self {
-            base: CoreBase::new()?,
+            base: CoreBase::new("Dark Souls III")?,
             last_item_time: Instant::now(),
             locations_sent: 0,
             shop_items_hinted: Default::default(),
