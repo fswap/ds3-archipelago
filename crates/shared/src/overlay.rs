@@ -174,7 +174,7 @@ impl<G: Game> Overlay<G> {
         let mut builder = ui
             .window(format!(
                 "Archipelago Client {} [{}]###ap-client-overlay",
-                env!("CARGO_PKG_VERSION"),
+                G::CLIENT_VERSION,
                 match core.base().connection_state_type() {
                     ap::ConnectionStateType::Connected => "Connected",
                     ap::ConnectionStateType::Connecting => "Connecting...",

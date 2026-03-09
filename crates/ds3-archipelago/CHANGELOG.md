@@ -1,3 +1,10 @@
+## 4.0.0-rc.9
+
+* Use the proper client version rather than "0.0.0".
+
+* Properly verify that the client mod is the same version as the static
+  randomizer.
+
 ## 4.0.0-rc.8
 
 * Fix a bug where the game and slot were reversed in the Archipelago protocol.

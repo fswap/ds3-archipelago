@@ -15,6 +15,9 @@ pub trait Game: Send + Sync + 'static {
     /// The input blocker type to block input to this game.
     type InputBlocker: InputBlocker;
 
+    /// The version of this client.
+    const CLIENT_VERSION: &str;
+
     /// Schedules `task` to be run each frame, ideally at the beginning of the
     /// frame, on the game's main thread.
     ///

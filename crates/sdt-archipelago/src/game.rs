@@ -10,6 +10,7 @@ impl shared::Game for Sekiro {
     type Core = crate::core::Core;
     type GraphicsHooks = hudhook::hooks::dx11::ImguiDx11Hooks;
     type InputBlocker = shared::NoOpInputBlocker;
+    const CLIENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
     unsafe fn run_recurring_task(mut task: impl FnMut() + 'static + Send) -> Result<()> {
         unsafe { SprjTaskImp::instance() }?

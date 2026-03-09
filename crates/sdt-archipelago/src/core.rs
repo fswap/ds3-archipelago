@@ -29,6 +29,7 @@ pub struct Core {
 
 impl shared::Core for Core {
     type SlotData = SlotData;
+    type Game = crate::game::Sekiro;
 
     /// Creates a new instance of the mod.
     fn new() -> Result<Self> {

@@ -8,7 +8,7 @@ use log::*;
 use serde::de::DeserializeOwned;
 use ustr::Ustr;
 
-use crate::config::Config;
+use crate::{Game, config::Config};
 
 /// The maximum number of log messages to store.
 ///
@@ -215,15 +215,15 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
 
     /// Returns an error if the user's static randomizer version doesn't match
     /// this mod's version.
-    fn check_version_conflict(&self) -> Result<()> {
+    fn check_version_conflict(&self, expected_version: &str) -> Result<()> {
         if let Some(client_version) = self.config().client_version()
-            && client_version != env!("CARGO_PKG_VERSION")
+            && client_version != expected_version
         {
             bail!(
                 "Your apconfig.json was generated using static randomizer v{}, but this client is \
                  v{}. Re-run the static randomizer with the current version.",
                 client_version,
-                env!("CARGO_PKG_VERSION"),
+                expected_version,
             );
         } else {
             Ok(())
@@ -250,6 +250,9 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
 pub trait Core: Send + Sized {
     /// The slot data for this runner.
     type SlotData: DeserializeOwned + Send + 'static;
+
+    /// The game this is for.
+    type Game: Game;
 
     /// Creates a new instance of the mod.
     fn new() -> Result<Self>;
@@ -322,7 +325,10 @@ pub trait Core: Send + Sized {
             return;
         }
 
-        self.base_mut().error = match self.base().check_version_conflict() {
+        self.base_mut().error = match self
+            .base()
+            .check_version_conflict(Self::Game::CLIENT_VERSION)
+        {
             Err(err) => Some(err),
             Ok(_) => self.update_live().err(),
         }
