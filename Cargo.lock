@@ -519,12 +519,12 @@ dependencies = [
 [[package]]
 name = "darksouls3"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+source = "git+https://github.com/nex3/fromsoftware-rs?branch=merged#7e14a087690e08ce4e3b2902d0c9e8ae19e00896"
 dependencies = [
  "bitfield",
  "cxx-stl 4.4.0",
  "encoding_rs",
- "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "pelite",
  "thiserror 1.0.69",
  "vtable-rs",
@@ -631,7 +631,7 @@ dependencies = [
  "bincode",
  "darksouls3 0.13.0",
  "darksouls3-extra",
- "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "hudhook",
  "ilhook",
  "log",
@@ -802,10 +802,10 @@ dependencies = [
 [[package]]
 name = "fromsoftware-shared"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+source = "git+https://github.com/nex3/fromsoftware-rs?branch=merged#7e14a087690e08ce4e3b2902d0c9e8ae19e00896"
 dependencies = [
  "from-singleton",
- "fromsoftware-shared-macros 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared-macros 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "glam",
  "pelite",
  "thiserror 1.0.69",
@@ -840,7 +840,7 @@ dependencies = [
 [[package]]
 name = "fromsoftware-shared-macros"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+source = "git+https://github.com/nex3/fromsoftware-rs?branch=merged#7e14a087690e08ce4e3b2902d0c9e8ae19e00896"
 dependencies = [
  "inflections",
  "proc-macro2",
@@ -1733,13 +1733,13 @@ dependencies = [
  "anyhow",
  "archipelago_rs",
  "bincode",
- "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "hudhook",
  "ilhook",
  "log",
  "regex",
  "regex-macro",
- "sekiro 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "sekiro 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "sekiro-extra",
  "serde",
  "serde_json",
@@ -1792,13 +1792,13 @@ dependencies = [
 [[package]]
 name = "sekiro"
 version = "0.13.0"
-source = "git+https://github.com/vswarte/fromsoftware-rs#61e8ff3a44325f9745393c3d7f7641f089a77f6a"
+source = "git+https://github.com/nex3/fromsoftware-rs?branch=merged#7e14a087690e08ce4e3b2902d0c9e8ae19e00896"
 dependencies = [
  "bitfield",
  "bitflags 2.11.0",
  "cxx-stl 4.4.0",
  "encoding_rs",
- "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "pelite",
  "thiserror 1.0.69",
  "vtable-rs",
@@ -1932,7 +1932,7 @@ dependencies = [
  "bitflags 2.11.0",
  "chrono",
  "clipboard-win",
- "fromsoftware-shared 0.13.0 (git+https://github.com/vswarte/fromsoftware-rs)",
+ "fromsoftware-shared 0.13.0 (git+https://github.com/nex3/fromsoftware-rs?branch=merged)",
  "hudhook",
  "imgui",
  "imgui-sys",

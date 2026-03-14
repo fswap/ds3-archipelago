@@ -104,10 +104,6 @@ impl shared::Core for Core {
         Ok(())
     }
 
-    /// Implementors may override this to handles custom command inputs via the
-    /// say console. Returns whether a command was handled.
-    ///
-    /// By default, this doesn't handle any commands.
     fn handle_command(&mut self, command: &str, arg: Option<&str>) -> bool {
         let mut arg_error = |usage: &str| {
             self.log(vec![

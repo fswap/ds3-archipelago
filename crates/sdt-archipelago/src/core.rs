@@ -1,9 +1,11 @@
-use std::collections::HashSet;
-use std::time::Instant;
+use std::{collections::HashSet, str::FromStr, time::Instant};
 
 use anyhow::{Result, bail};
+use archipelago_rs as ap;
+use archipelago_rs::RichText;
 use fromsoftware_shared::FromStatic;
 use log::*;
+use regex_macro::regex;
 use sekiro::sprj::*;
 
 use crate::item::{EquipParamExt, ItemIdExt};
@@ -25,6 +27,12 @@ pub struct Core {
     /// starts at 0 when the player boots the game again to ensure that they
     /// resend any locations that may have been missed.
     locations_sent: usize,
+
+    /// Whether the player has achieved their goal and sent that information to
+    /// the Archipelago server. This is stored here rather than in the save data
+    /// so that it's resent every time the player starts the game, just in case
+    /// it got lost in transit.
+    sent_goal: bool,
 }
 
 impl shared::Core for Core {
@@ -37,6 +45,7 @@ impl shared::Core for Core {
             base: CoreBase::new("Sekiro: Shadows Die Twice")?,
             last_item_time: Instant::now(),
             locations_sent: 0,
+            sent_goal: false,
         })
     }
 
@@ -65,8 +74,120 @@ impl shared::Core for Core {
 
         self.process_incoming_items();
         self.process_inventory_items()?;
+        self.handle_goal()?;
 
         Ok(())
+    }
+
+    fn handle_command(&mut self, command: &str, arg: Option<&str>) -> bool {
+        let mut arg_error = |usage: &str| {
+            self.log(vec![
+                RichText::Color {
+                    text: format!("Invalid {}.", command),
+                    color: ap::TextColor::Red,
+                },
+                " Usage:\n".into(),
+                usage.into(),
+            ]);
+        };
+
+        match command {
+            "!getevent" => {
+                let Some(flag) = arg.and_then(|f| u32::from_str(f).ok()) else {
+                    arg_error("!getevent EVENT_FLAG");
+                    return true;
+                };
+
+                let Ok(flag) = EventFlag::try_from(flag) else {
+                    self.log(RichText::Color {
+                        text: format!("Invalid event ID: {}", flag),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
+                    self.log(RichText::Color {
+                        text: "SprjEventFlagMan not loaded".into(),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let value = events.get_flag(flag);
+                self.log(vec![
+                    "Event ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", u32::from(flag)),
+                        color: ap::TextColor::Blue,
+                    },
+                    ": ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", value),
+                        color: if value {
+                            ap::TextColor::Green
+                        } else {
+                            ap::TextColor::Red
+                        },
+                    },
+                ]);
+
+                true
+            }
+
+            #[cfg(debug_assertions)]
+            "!setevent" => {
+                let Some((flag, value)) = arg.and_then(|a| {
+                    let args = regex!(" +").split(a).collect::<Vec<_>>();
+                    if args.len() == 2 {
+                        Some((u32::from_str(args[0]).ok()?, bool::from_str(args[1]).ok()?))
+                    } else {
+                        None
+                    }
+                }) else {
+                    arg_error("!setevent EVENT_FLAG BOOL");
+                    return true;
+                };
+
+                let Ok(flag) = EventFlag::try_from(flag) else {
+                    self.log(RichText::Color {
+                        text: format!("Invalid event ID: {}", flag),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                let Ok(events) = (unsafe { SprjEventFlagMan::instance() }) else {
+                    self.log(RichText::Color {
+                        text: "SprjEventFlagMan not loaded".into(),
+                        color: ap::TextColor::Red,
+                    });
+                    return true;
+                };
+
+                events.set_flag(flag, value);
+                self.log(vec![
+                    "Set event ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", u32::from(flag)),
+                        color: ap::TextColor::Blue,
+                    },
+                    " to ".into(),
+                    RichText::Color {
+                        text: format!("{:?}", value),
+                        color: if value {
+                            ap::TextColor::Green
+                        } else {
+                            ap::TextColor::Red
+                        },
+                    },
+                ]);
+
+                true
+            }
+
+            _ => false,
+        }
     }
 }
 
@@ -226,6 +347,23 @@ impl Core {
             client.mark_checked(save_data.locations.iter().copied())?;
             self.locations_sent = save_data.locations.len();
         }
+        Ok(())
+    }
+
+    /// Detects when the player has won the game and notifies the server.
+    fn handle_goal(&mut self) -> Result<()> {
+        if let Ok(event_man) = (unsafe { SprjEventFlagMan::instance() })
+            && !self.sent_goal
+            && let Some(client) = self.client_mut()
+            // Defeated Sword Saint Isshin
+            && event_man.get_flag(11125706.try_into().unwrap())
+            // Beat the game (gave tears to Kuro or completed Shura)
+            && event_man.get_flag(6901.try_into().unwrap())
+        {
+            client.set_status(ap::ClientStatus::Goal)?;
+            self.sent_goal = true;
+        }
+
         Ok(())
     }
 }

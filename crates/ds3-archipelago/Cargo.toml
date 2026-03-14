@@ -14,7 +14,7 @@ name = "ds3_archipelago"
 anyhow.workspace = true
 archipelago_rs.workspace = true
 bincode.workspace = true
-darksouls3 = { git = "https://github.com/vswarte/fromsoftware-rs" }
+darksouls3 = { git = "https://github.com/nex3/fromsoftware-rs", branch = "merged" }
 darksouls3-extra = "0.1.0"
 fromsoftware-shared.workspace = true
 hudhook.workspace = true

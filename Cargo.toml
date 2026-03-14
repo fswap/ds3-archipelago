@@ -15,7 +15,7 @@ repository = "https://github.com/fswap/fromsoftware-archipelago"
 anyhow = "1.0.100"
 archipelago_rs = "2.0.0"
 bincode = "2.0.1"
-fromsoftware-shared = { git = "https://github.com/vswarte/fromsoftware-rs" }
+fromsoftware-shared = { git = "https://github.com/nex3/fromsoftware-rs", branch = "merged" }
 fromsoftware-extra-shared = { git = "https://github.com/nex3/fromsoftware-extra", branch = "sekiro-save" }
 hudhook = "0.8.1"
 ilhook = {version = "2.3.0", features = ["x64"]}

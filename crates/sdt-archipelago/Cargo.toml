@@ -1,6 +1,6 @@
 [package]
 name = "sdt-archipelago"
-version = "0.0.0"
+version = "0.0.1"
 edition.workspace = true
 repository.workspace = true
 license.workspace = true
@@ -14,7 +14,7 @@ name = "sdt_archipelago"
 anyhow.workspace = true
 archipelago_rs.workspace = true
 bincode.workspace = true
-sekiro = { git = "https://github.com/vswarte/fromsoftware-rs" }
+sekiro = { git = "https://github.com/nex3/fromsoftware-rs", branch = "merged" }
 sekiro-extra = { git = "https://github.com/nex3/fromsoftware-extra", branch = "sekiro-save" }
 fromsoftware-shared.workspace = true
 hudhook.workspace = true
