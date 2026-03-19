@@ -11,11 +11,7 @@ use ustr::Ustr;
 use crate::{Game, SectionProfiler, config::Config};
 
 /// The maximum number of log messages to store.
-///
-/// This is relatively low because imgui is not very efficient about not
-/// rendering the offscreen messages every frame, which can cause real slowdown
-/// over long runs with chatty connections.
-const LOG_BUFFER_LIMIT: usize = 200;
+const LOG_BUFFER_LIMIT: usize = 1000;
 
 /// The grace period between MapItemMan starting to exist and the mod beginning
 /// to take actions.
@@ -35,8 +31,9 @@ pub struct CoreBase<G: Game, S: DeserializeOwned + Send + 'static> {
     /// The Archipelago client connection.
     connection: ap::Connection<S>,
 
-    /// The log of prints displayed in the overlay.
-    log_buffer: VecDeque<ap::Print>,
+    /// The log of prints that can be displayed in the overlay, along with the
+    /// times they were received.
+    log_buffer: VecDeque<(ap::Print, Instant)>,
 
     /// Events we're waiting to process until the player loads a save. This is
     /// always empty unless a connection is connected and the player is on the
@@ -64,6 +61,7 @@ impl<G: Game, S: DeserializeOwned + Send + 'static> CoreBase<G, S> {
         let game = game.into();
         let config = Config::load()?;
         let connection = Self::new_connection(game, &config);
+
         Ok(Self {
             game,
             config,
@@ -145,7 +143,7 @@ impl<G: Game, S: DeserializeOwned + Send + 'static> CoreBase<G, S> {
 
     /// Returns the list of all logs that have been emitted in the current
     /// session.
-    pub(crate) fn logs(&self) -> impl ExactSizeIterator<Item = &ap::Print> {
+    pub(crate) fn logs(&self) -> impl ExactSizeIterator<Item = &(ap::Print, Instant)> {
         self.log_buffer.iter()
     }
 
@@ -210,7 +208,7 @@ impl<G: Game, S: DeserializeOwned + Send + 'static> CoreBase<G, S> {
                     if self.log_buffer.len() >= LOG_BUFFER_LIMIT {
                         self.log_buffer.pop_front();
                     }
-                    self.log_buffer.push_back(print);
+                    self.log_buffer.push_back((print, Instant::now()));
                 }
                 _ => {}
             }
@@ -250,7 +248,7 @@ impl<G: Game, S: DeserializeOwned + Send + 'static> CoreBase<G, S> {
         if self.log_buffer.len() >= LOG_BUFFER_LIMIT {
             self.log_buffer.pop_front();
         }
-        self.log_buffer.push_back(print);
+        self.log_buffer.push_back((print, Instant::now()));
     }
 }
 

@@ -1,5 +1,6 @@
 #[cfg(feature = "profile")]
-use std::time::{Duration, Instant};
+use std::time::Duration;
+use std::time::Instant;
 use std::{marker::PhantomData, mem, ptr};
 
 use archipelago_rs::{self as ap, RichText, TextColor};
@@ -48,9 +49,9 @@ pub struct Overlay<G: Game> {
     /// Whether the log was previously scrolled all the way down.
     log_was_scrolled_down: bool,
 
-    /// The number of logs that were most recently emitted. This is used to
-    /// determine when new logs are emitted for [frames_since_new_logs].
-    logs_emitted: usize,
+    /// The time of the most recent log we've seen. This is used to determine
+    /// when new logs are emitted for [frames_since_new_logs].
+    last_log_emitted: Instant,
 
     /// The number of frames that have elapsed since new logs were last added.
     /// We use this to determine when to auto-scroll the log window.
@@ -112,7 +113,7 @@ impl<G: Game> Overlay<G> {
             say_input: Default::default(),
             say_history: Default::default(),
             log_was_scrolled_down: false,
-            logs_emitted: 0,
+            last_log_emitted: Instant::now(),
             frames_since_new_logs: 0,
             settings_window_visible: false,
             was_main_menu: false,
@@ -402,34 +403,50 @@ impl<G: Game> Overlay<G> {
             .always_vertical_scrollbar(true)
             .always_horizontal_scrollbar(!is_compact_mode)
             .build(|| {
-                let logs = core.base().logs();
-                if logs.len() != self.logs_emitted {
+                if let Some((_, log_time)) = core.base().logs().last()
+                    && log_time > &self.last_log_emitted
+                {
                     self.frames_since_new_logs = 0;
-                    self.logs_emitted = logs.len();
+                    self.last_log_emitted = *log_time;
                 }
 
-                for message in logs {
-                    use ap::Print::*;
-                    write_message_data(
-                        ui,
-                        message.data(),
-                        // De-emphasize miscellaneous server prints.
-                        match message {
-                            Chat { .. }
-                            | ServerChat { .. }
-                            | Tutorial { .. }
-                            | CommandResult { .. }
-                            | AdminCommandResult { .. }
-                            | Unknown { .. } => 0xff,
-                            ItemSend { item, .. } | ItemCheat { item, .. } | Hint { item, .. }
-                                if core.base().config().slot() == item.receiver().name()
-                                    || core.base().config().slot() == item.sender().name() =>
-                            {
-                                0xFF
-                            }
-                            _ => 0xAA,
-                        },
-                    );
+                let clipper = ListClipper::new(core.base().logs().len().try_into().unwrap());
+                let mut clip = clipper.begin(ui);
+                while clip.step() {
+                    for (message, _) in core
+                        .base()
+                        .logs()
+                        .skip(clip.display_start().try_into().unwrap_or(0))
+                        .take(
+                            (clip.display_end() - clip.display_start())
+                                .try_into()
+                                .unwrap_or(0),
+                        )
+                    {
+                        use ap::Print::*;
+                        write_message_data(
+                            ui,
+                            message.data(),
+                            // De-emphasize miscellaneous server prints.
+                            match message {
+                                Chat { .. }
+                                | ServerChat { .. }
+                                | Tutorial { .. }
+                                | CommandResult { .. }
+                                | AdminCommandResult { .. }
+                                | Unknown { .. } => 0xff,
+                                ItemSend { item, .. }
+                                | ItemCheat { item, .. }
+                                | Hint { item, .. }
+                                    if core.base().config().slot() == item.receiver().name()
+                                        || core.base().config().slot() == item.sender().name() =>
+                                {
+                                    0xFF
+                                }
+                                _ => 0xAA,
+                            },
+                        );
+                    }
                 }
                 if self.log_was_scrolled_down && self.frames_since_new_logs < 10 {
                     ui.set_scroll_y(ui.scroll_max_y());

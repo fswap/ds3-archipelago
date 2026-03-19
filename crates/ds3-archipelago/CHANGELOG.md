@@ -4,6 +4,9 @@
   expected to cause any noticeable changes; if anything is different, please let
   us know on [GitHub] or [Discord].
 
+* Increase the limit on log entries from 200 to 1000, and improve the way we
+  handle large numbers of logs to avoid performance degradation.
+
 [GitHub]: https://github.com/fswap/from-software-archipelago-clients/issues/new
 [Discord]: https://discord.com/channels/731205301247803413/1005246392329052220
 

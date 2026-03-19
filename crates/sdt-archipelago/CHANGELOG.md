@@ -6,6 +6,9 @@
 
 * Fix some cases where error messages would refer to DS3 instead of Sekiro.
 
+* Increase the limit on log entries from 200 to 1000, and improve the way we
+  handle large numbers of logs to avoid performance degradation.
+
 ## 1.0.0-alpha.6
 
 * Use ModEngine3 version 0.11.0.
