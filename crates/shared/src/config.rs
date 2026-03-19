@@ -1,21 +1,23 @@
-use std::{fs, io, path::PathBuf};
+use std::{fs, io, path::PathBuf, marker::PhantomData};
 
 use anyhow::{Error, Result};
 use serde::{Deserialize, Serialize};
 
-use crate::utils;
+use crate::{utils, Game};
 
-/// The configuration file for the DS3 Archipelago connection.
+/// The configuration file for the Archipelago connection.
 #[derive(Deserialize, Serialize)]
-pub struct Config {
+pub struct Config<G: Game> {
     url: String,
     slot: String,
     seed: String,
     client_version: Option<String>,
     password: Option<String>,
+    #[serde(skip)]
+    _marker: PhantomData<G>,
 }
 
-impl Config {
+impl<G: Game> Config<G> {
     /// Loads the config from disk.
     pub fn load() -> Result<Self> {
         let path = Self::path()?;
@@ -28,8 +30,9 @@ impl Config {
             }),
             Err(err) if err.kind() == io::ErrorKind::NotFound => {
                 Err(Error::from(err).context(format!(
-                    "{} doesn't exist. Have you run randomizer\\DS3Randomizer.exe?",
+                    "{} doesn't exist. Have you run randomizer\\{}?",
                     path.to_string_lossy(),
+                    G::TYPE.static_randomizer_basename()
                 )))
             }
             Err(err) => Err(Error::from(err).context(format!(

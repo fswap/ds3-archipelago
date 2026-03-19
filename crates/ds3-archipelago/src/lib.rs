@@ -19,7 +19,7 @@ extern "C" fn DllMain(hmodule: HINSTANCE, call_reason: u32) -> bool {
         return true;
     }
 
-    shared::handle_panics();
+    shared::handle_panics::<game::DarkSoulsIII>();
     shared::start_logger();
 
     // Set up hooks in the main thread to mitigate the risk of the game code

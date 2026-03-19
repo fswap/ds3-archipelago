@@ -26,7 +26,7 @@ pub use input_blocker::*;
 
 /// Handle panics by both logging and popping up a message box, which is the
 /// most reliable way to make something visible to the end user.
-pub fn handle_panics() {
+pub fn handle_panics<G: Game>() {
     panic::set_hook(Box::new(|panic_info| {
         let mut message = String::new();
         if let Some(s) = panic_info.payload().downcast_ref::<&str>() {
@@ -40,17 +40,17 @@ pub fn handle_panics() {
         message.push_str(&format!("\n{:?}", Backtrace::new()));
 
         error!("{}", message);
-        message_box(message);
+        message_box::<G>(message);
     }));
 }
 
 /// Displays a message box with the given message.
-fn message_box(message: impl Into<String>) {
+fn message_box<G: Game>(message: impl Into<String>) {
     unsafe {
         MessageBoxW(
             HWND(0),
             &HSTRING::from(message.into()),
-            w!("DS3 Archipelago Client"),
+            &HSTRING::from(format!("{} Archipelago Client", G::TYPE.short_name())),
             Default::default(),
         );
     }

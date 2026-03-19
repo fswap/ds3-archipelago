@@ -22,7 +22,7 @@ const LOG_BUFFER_LIMIT: usize = 200;
 const GRACE_PERIOD: Duration = Duration::from_secs(10);
 
 /// The base struct for implementations of [Core].
-pub struct CoreBase<S: DeserializeOwned + Send + 'static> {
+pub struct CoreBase<G: Game, S: DeserializeOwned + Send + 'static> {
     /// The name of the game that's being played.
     game: Ustr,
 
@@ -30,7 +30,7 @@ pub struct CoreBase<S: DeserializeOwned + Send + 'static> {
     /// guaranteed to be complete *or* accurate; it's the mod's responsibility
     /// to ensure it makes sense before actually interacting with an individual
     /// game.
-    config: Config,
+    config: Config<G>,
 
     /// The Archipelago client connection.
     connection: ap::Connection<S>,
@@ -54,7 +54,7 @@ pub struct CoreBase<S: DeserializeOwned + Send + 'static> {
     error: Option<Error>,
 }
 
-impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
+impl<G: Game, S: DeserializeOwned + Send + 'static> CoreBase<G, S> {
     /// Creates a new instance of [CoreBase].
     pub fn new(game: impl Into<Ustr>) -> Result<Self> {
         let game = game.into();
@@ -72,7 +72,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
     }
 
     /// Creates a new [ClientConnection] based on the connection information in [config].
-    fn new_connection(game: Ustr, config: &Config) -> ap::Connection<S> {
+    fn new_connection(game: Ustr, config: &Config<G>) -> ap::Connection<S> {
         let mut options = ap::ConnectionOptions::new()
             .receive_items(ap::ItemHandling::OtherWorlds {
                 own_world: false,
@@ -129,7 +129,7 @@ impl<S: DeserializeOwned + Send + 'static> CoreBase<S> {
     }
 
     /// Returns the current user config.
-    pub(crate) fn config(&self) -> &Config {
+    pub(crate) fn config(&self) -> &Config<G> {
         &self.config
     }
 
@@ -258,10 +258,10 @@ pub trait Core: Send + Sized {
     fn new() -> Result<Self>;
 
     /// Returns the base struct.
-    fn base(&self) -> &CoreBase<Self::SlotData>;
+    fn base(&self) -> &CoreBase<Self::Game, Self::SlotData>;
 
     /// Returns the mutable base struct.
-    fn base_mut(&mut self) -> &mut CoreBase<Self::SlotData>;
+    fn base_mut(&mut self) -> &mut CoreBase<Self::Game, Self::SlotData>;
 
     /// Updates the game logic and checks for common errors. This is only run if
     /// we're currently connected to the Archipelago server and the mod has not

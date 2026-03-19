@@ -16,7 +16,7 @@ const TIME_PER_FRAME_PRINT: Duration = Duration::from_secs(5);
 /// still using Hudhook and ImGui to surface fatal errors that may occur during
 /// initialization.
 pub(crate) struct ErrorDisplay<G: Game> {
-    /// The struct that's used to block and unblock input going to DS3.
+    /// The struct that's used to block and unblock input going to the game.
     input_blocker: G::InputBlocker,
 
     /// The main overlay if it managed to initialize correctly, or [None]

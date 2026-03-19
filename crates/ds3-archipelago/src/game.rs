@@ -10,6 +10,7 @@ impl shared::Game for DarkSoulsIII {
     type Core = crate::core::Core;
     type GraphicsHooks = hudhook::hooks::dx11::ImguiDx11Hooks;
     type InputBlocker = DS3InputBlocker;
+    const TYPE: shared::GameType = shared::GameType::DarkSoulsIII;
     const CLIENT_VERSION: &str = env!("CARGO_PKG_VERSION");
 
     unsafe fn run_recurring_task(mut task: impl FnMut() + 'static + Send) -> Result<()> {

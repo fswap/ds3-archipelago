@@ -1,3 +1,11 @@
+## 1.0.0-alpha.7
+
+* Update to the latest upstream version of the static randomizer. This should
+  reduce the number of weird in-game logic bugs and especially enemy randomizer
+  bugs.
+
+* Fix some cases where error messages would refer to DS3 instead of Sekiro.
+
 ## 1.0.0-alpha.6
 
 * Use ModEngine3 version 0.11.0.

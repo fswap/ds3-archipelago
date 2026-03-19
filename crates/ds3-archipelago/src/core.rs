@@ -22,7 +22,7 @@ const DEATH_LINK_GRACE_PERIOD: Duration = Duration::from_secs(30);
 /// non-UI-related game logic and interacting with the Archipelago client.
 pub struct Core {
     /// The cross-game core.
-    base: CoreBase<SlotData>,
+    base: CoreBase<crate::game::DarkSoulsIII, SlotData>,
 
     /// The time we last granted an item to the player. Used to ensure we don't
     /// give more than one item per second.
@@ -65,11 +65,11 @@ impl shared::Core for Core {
         })
     }
 
-    fn base(&self) -> &CoreBase<SlotData> {
+    fn base(&self) -> &CoreBase<Self::Game, SlotData> {
         &self.base
     }
 
-    fn base_mut(&mut self) -> &mut CoreBase<SlotData> {
+    fn base_mut(&mut self) -> &mut CoreBase<Self::Game, SlotData> {
         &mut self.base
     }
 

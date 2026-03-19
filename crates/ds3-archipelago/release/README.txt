@@ -1,4 +1,4 @@
-# Dark Souls III Archipelago Randomizer 4.0.0-rc.10
+# Dark Souls III Archipelago Randomizer 4.0.0-rc.11
 
 This package contains the static randomizer and the DS3 mod for integrating _Dark Souls III_ into the [Archipelago] multiworld randomizer. You can download this from the "Assets" dropdown on [the Releases page]. If you're already reading this on the Releases page, it's just below this documentation. See [the Archipelago DS3 setup guide] for details on how to get this running, and the [game page] for more details on how randomization works with _Dark Souls III_.
 

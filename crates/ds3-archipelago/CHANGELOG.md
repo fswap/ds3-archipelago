@@ -1,3 +1,12 @@
+## 4.0.0-rc.11
+
+* Update to the latest upstream version of the static randomizer. This is not
+  expected to cause any noticeable changes; if anything is different, please let
+  us know on [GitHub] or [Discord].
+
+[GitHub]: https://github.com/fswap/from-software-archipelago-clients/issues/new
+[Discord]: https://discord.com/channels/731205301247803413/1005246392329052220
+
 ## 4.0.0-rc.10
 
 * Use ModEngine3 version 0.11.0.

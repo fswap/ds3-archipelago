@@ -15,6 +15,9 @@ pub trait Game: Send + Sync + 'static {
     /// The input blocker type to block input to this game.
     type InputBlocker: InputBlocker;
 
+    /// Which game this represents.
+    const TYPE: GameType;
+
     /// The version of this client.
     const CLIENT_VERSION: &str;
 
@@ -60,5 +63,23 @@ pub trait Game: Send + Sync + 'static {
     /// the game's internal state.
     unsafe fn is_menu_open() -> bool {
         false
+    }
+}
+
+/// An enum of From Software games, for situtations where the shared code just
+/// needs to do some small difference for each one.
+pub enum GameType {
+    DarkSoulsIII, Sekiro
+}
+
+impl GameType {
+    /// Returns a short, human-friendly name for this game.
+    pub fn short_name(&self) -> &str {
+        match self {GameType::DarkSoulsIII => "DS3", GameType::Sekiro => "Sekiro"}
+    }
+
+    /// The basename for the static randomizer for this game.
+    pub fn static_randomizer_basename(&self) -> &str {
+        match self {GameType::DarkSoulsIII => "DS3Randomizer.exe", GameType::Sekiro => "SekiroRandomizer.exe"}
     }
 }
