@@ -1,84 +1,4 @@
-## 4.0.0-rc.11
-
-* Update to the latest upstream version of the static randomizer. This is not
-  expected to cause any noticeable changes; if anything is different, please let
-  us know on [GitHub] or [Discord].
-
-* Increase the limit on log entries from 200 to 1000, and improve the way we
-  handle large numbers of logs to avoid performance degradation.
-
-[GitHub]: https://github.com/fswap/from-software-archipelago-clients/issues/new
-[Discord]: https://discord.com/channels/731205301247803413/1005246392329052220
-
-## 4.0.0-rc.10
-
-* Use ModEngine3 version 0.11.0.
-
-## 4.0.0-rc.9
-
-* Use the proper client version rather than "0.0.0".
-
-* Properly verify that the client mod is the same version as the static
-  randomizer.
-
-## 4.0.0-rc.8
-
-* Fix a bug where the game and slot were reversed in the Archipelago protocol.
-
-* Update the ME3 config to refer to `ds3_archipelago.dll`.
-
-## 4.0.0-rc.7
-
-* Use the latest `archipelago_rs` package.
-
-## 4.0.0-rc.6
-
-* Fix a null reference error in DS3Randomizer.exe.
-
-## 4.0.0-rc.5
-
-* Fix a release error where the version number was computed incorrectly.
-
-## 4.0.0-rc.4
-
-* Enable the DLC by default.
-
-* Add `All Bosses`, `Base Game Bosses`, and `DLC Bosses` as goal options.
-
-* Don't allow a player to disable DLC and still require that they beat a DLC
-  boss.
-
-* Fix the "Painted World of Ariandel End Boss" victory condition.
-
-* Fix some cases where item smoothing could cause invalid item placements. 
-
-* Produce a better error message under Wine/Proton when the room has fallen
-  asleep.
-
-## 4.0.0-rc.3
-
-* Fix a bug where logs were being displayed in reverse order in the overlay.
-
-* Fix a bug where, if you load into a save with the overlay collapsed, it won't
-  be openable afterwards.
-
-* Ensure that the required Archipelago version in the DS3 options template is
-  accurate.
-
-## 4.0.0-rc.2
-
-* Include the connection between Kiln of the First Flame and Dreg Heap in logic
-  as long as the Kiln of the First Flame boss isn't the only goal.
-
-* Limit the log history to 200 messages long to avoid slowdown in long sessions.
-
-* Fix a bug where the static randomizer could crash if Yhorm was randomly placed
-  in his vanilla location.
-
-* Fix another case where the config file's location could be detected
-  incorrectly on Linux.
-
-## 4.0.0-rc.1
+## 4.0.0
 
 ### Features
 
@@ -92,6 +12,10 @@
 * When viewing an Archipelago item in a shop, the client will now post a hint to
   the server with the item's location.
 
+* Use ModEngine3 for better stability and upstream support.
+
+* Use the latest published version of the static randomizer.
+
 #### Options
 
 * Auto-equip is no longer supported.
@@ -100,11 +24,16 @@
   bundled apworld. See the documentation of `goal` in `Dark Souls III Options
   Template.yaml` for details.
 
+* Include the connection between Kiln of the First Flame and Dreg Heap in logic
+  as long as the Kiln of the First Flame boss isn't the only goal.
+
 * Add an option to only send death links when you die without picking up your
   bloodstain.
 
 * Add an option to customize death link amnesty. See the documentation of
   `death_link_amnesty` in `Dark Souls III Options Template.yaml` for details.
+
+* Enable the DLC by default.
 
 ### Game Logic
 
