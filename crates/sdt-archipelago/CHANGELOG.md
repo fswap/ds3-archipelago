@@ -1,3 +1,10 @@
+## 1.0.0-alpha.8
+
+* Added support for further options:
+	- Remove Headless slow walk
+	- Randomize Headless enemies
+	- Randomize skills and prosthetics in their respective learning trees.
+
 ## 1.0.0-alpha.7
 
 * Update to the latest upstream version of the static randomizer. This should
