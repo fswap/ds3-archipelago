@@ -7,7 +7,7 @@ use chrono::prelude::*;
 use hudhook::Hudhook;
 use log::*;
 use simplelog::{ColorChoice, CombinedLogger, SharedLogger, TermLogger, TerminalMode, WriteLogger};
-use windows::Win32::{Foundation::*, UI::WindowsAndMessaging::MessageBoxW};
+use windows::Win32::UI::WindowsAndMessaging::MessageBoxW;
 use windows::core::*;
 
 mod clipboard;
@@ -50,7 +50,7 @@ pub fn handle_panics<G: Game>() {
 fn message_box<G: Game>(message: impl Into<String>) {
     unsafe {
         MessageBoxW(
-            HWND(0),
+            None,
             &HSTRING::from(message.into()),
             &HSTRING::from(format!("{} Archipelago Client", G::TYPE.short_name())),
             Default::default(),
@@ -105,7 +105,7 @@ fn create_write_logger(dir: impl AsRef<Path>) -> Result<Box<WriteLogger<fs::File
 
 /// Initializes the basic hooks into the underlying rendering system for the
 /// current mod.
-pub fn initialize<G: Game>(hmodule: HINSTANCE, blocker: G::InputBlocker) {
+pub fn initialize<G: Game>(blocker: G::InputBlocker) {
     std::thread::spawn(move || {
         info!("Worker thread initialized.");
 
@@ -140,7 +140,6 @@ pub fn initialize<G: Game>(hmodule: HINSTANCE, blocker: G::InputBlocker) {
 
         if let Err(e) = Hudhook::builder()
             .with::<G::GraphicsHooks>(ErrorDisplay::<G>::new(core, blocker))
-            .with_hmodule(hmodule)
             .build()
             .apply()
         {

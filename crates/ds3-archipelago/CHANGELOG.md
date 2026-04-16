@@ -1,3 +1,9 @@
+## 4.0.1
+
+* Fix a bug on computers that took a long time to load the game in which
+  Archipelago would end up in a half-connected state. It now fails to connect
+  gracefully and allows players to reconnect once the game is fully loaded.
+
 ## 4.0.0
 
 ### Features

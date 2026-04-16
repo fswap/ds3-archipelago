@@ -457,7 +457,7 @@ impl Core {
             _ => {}
         }
 
-        let Ok(player) = (unsafe { PlayerIns::instance() }) else {
+        let Ok(player) = (unsafe { PlayerIns::local_player() }) else {
             return;
         };
 
@@ -510,7 +510,7 @@ impl Core {
         let Some(client) = self.client_mut() else {
             return Ok(());
         };
-        let Ok(player) = (unsafe { PlayerIns::instance() }) else {
+        let Ok(player) = (unsafe { PlayerIns::local_player() }) else {
             return Ok(());
         };
         if player.super_chr_ins.modules.data.hp != 0 {

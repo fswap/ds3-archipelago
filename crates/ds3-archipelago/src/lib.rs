@@ -14,7 +14,7 @@ use save_data::SaveData;
 /// This is where we set up the whole mod and start waiting for the app itself
 /// to be initialized enough for us to start doing real things.
 #[unsafe(no_mangle)]
-extern "C" fn DllMain(hmodule: HINSTANCE, call_reason: u32) -> bool {
+extern "C" fn DllMain(_: HINSTANCE, call_reason: u32) -> bool {
     if call_reason != DLL_PROCESS_ATTACH {
         return true;
     }
@@ -34,7 +34,7 @@ extern "C" fn DllMain(hmodule: HINSTANCE, call_reason: u32) -> bool {
     let blocker =
         unsafe { InputBlocker::get_instance() }.expect("Failed to initialize input blocker");
 
-    shared::initialize::<game::DarkSoulsIII>(hmodule, game::DS3InputBlocker(blocker));
+    shared::initialize::<game::DarkSoulsIII>(game::DS3InputBlocker(blocker));
 
     true
 }

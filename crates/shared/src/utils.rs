@@ -120,7 +120,7 @@ fn get_module_path(module: HMODULE) -> Result<PathBuf> {
     const GROWTH_FACTOR: f64 = 1.5;
     loop {
         filename = vec![0; size];
-        let n = unsafe { GetModuleFileNameW(module, &mut filename) } as usize;
+        let n = unsafe { GetModuleFileNameW(Some(module), &mut filename) } as usize;
         if n == 0 {
             return Err(WindowsError::from_thread().into());
         } else if n == filename.capacity()

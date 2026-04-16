@@ -14,7 +14,7 @@ name = "sdt_archipelago"
 anyhow.workspace = true
 archipelago_rs.workspace = true
 bincode.workspace = true
-sekiro = { git = "https://github.com/nex3/fromsoftware-rs", branch = "merged" }
+sekiro = { git = "https://github.com/vswarte/fromsoftware-rs" }
 sekiro-extra = { git = "https://github.com/nex3/fromsoftware-extra", branch = "sekiro-save" }
 fromsoftware-shared.workspace = true
 hudhook.workspace = true
