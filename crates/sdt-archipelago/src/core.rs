@@ -389,6 +389,6 @@ fn set_notice(id: ItemId, notice_log: bool, notice_dialog: bool) -> Result<(bool
         .into_dyn();
     let previous = (row.is_notice_log(), row.is_notice_dialog());
     row.set_is_notice_log(notice_log);
-    row.set_is_notice_log(notice_dialog);
+    row.set_is_notice_dialog(notice_dialog);
     Ok(previous)
 }
