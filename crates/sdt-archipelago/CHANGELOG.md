@@ -1,3 +1,12 @@
+## 1.0.0-alpha.9
+
+* Fix a bug where regions with slashes '/' in the name would cause issues randomizing the game.
+
+* Added support for further options:
+	- Remove Headless slow walk
+	- Randomize Headless enemies
+	- Randomize skills and prosthetics in their respective learning trees.
+
 ## 1.0.0-alpha.8
 
 * Fix a bug where sometimes loading the game would fail with an error about
