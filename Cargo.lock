@@ -79,6 +79,31 @@ dependencies = [
 ]
 
 [[package]]
+name = "archipelago_rs"
+version = "3.0.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f824b6faac01bc5bc1c4abfbe7fe8e81463033d0ebc63d7c9fa43d084695340a"
+dependencies = [
+ "bitflags 2.11.1",
+ "log",
+ "native-tls",
+ "oneshot",
+ "rand 0.10.1",
+ "rustls",
+ "sanitise-file-name",
+ "serde",
+ "serde_json",
+ "serde_repr",
+ "serde_with",
+ "smol",
+ "thiserror 2.0.18",
+ "try-specialize",
+ "tungstenite",
+ "ustr",
+ "webpki-roots",
+]
+
+[[package]]
 name = "arrayvec"
 version = "0.7.6"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -607,7 +632,7 @@ name = "ds3-archipelago"
 version = "4.0.2"
 dependencies = [
  "anyhow",
- "archipelago_rs",
+ "archipelago_rs 3.0.1",
  "bincode",
  "darksouls3",
  "darksouls3-extra",
@@ -659,7 +684,7 @@ dependencies = [
 name = "eldenring-archipelago"
 version = "0.1.0"
 dependencies = [
- "archipelago_rs",
+ "archipelago_rs 2.1.1",
  "eldenring",
  "er-codec",
  "er-semver",
@@ -1855,7 +1880,7 @@ name = "sdt-archipelago"
 version = "1.0.0-alpha.8"
 dependencies = [
  "anyhow",
- "archipelago_rs",
+ "archipelago_rs 3.0.1",
  "bincode",
  "fromsoftware-shared 0.13.0",
  "hudhook",
@@ -2043,7 +2068,7 @@ name = "shared"
 version = "0.0.0"
 dependencies = [
  "anyhow",
- "archipelago_rs",
+ "archipelago_rs 3.0.1",
  "backtrace",
  "bitflags 2.11.1",
  "chrono",
