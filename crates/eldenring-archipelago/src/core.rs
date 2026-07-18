@@ -483,6 +483,7 @@ impl shared::Core for Core {
                 // int-or-bool tolerant (er_logic::options): the apworld serializes options
                 // as ints (death_link: 1), which .as_bool() silently read as false.
                 crate::deathlink::set_enabled(er_logic::options::parse_death_link(sd));
+                crate::no_equip_load::set_enabled(er_logic::options::parse_no_equip_load(sd));
                 crate::no_weapon_reqs::set_enabled(er_logic::options::parse_bool_option(
                     sd,
                     "no_weapon_requirements",
@@ -2121,6 +2122,9 @@ impl shared::Core for Core {
 
         // 8b. no_weapon_requirements runtime param zeroing (latched once applied).
         crate::no_weapon_reqs::tick();
+
+        // 8b2. no_equip_load: weightless-equipment SpEffect on the player (param edit + apply).
+        crate::no_equip_load::tick();
 
         // 8c. Ticker-only pickup notifs: set showDialogCondType=0 game-wide so AP grants show the
         //     native right-side ticker, not the blocking "NEW Y:OK" modal (was a retired-baker

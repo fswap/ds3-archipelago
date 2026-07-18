@@ -25,6 +25,7 @@ mod inventory;
 mod key_resolver;
 mod keyitems;
 mod minibaker;
+mod no_equip_load;
 mod no_weapon_reqs;
 mod notif_ticker;
 mod params;

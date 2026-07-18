@@ -30,6 +30,11 @@ pub fn parse_death_link(slot_data: &Value) -> bool {
     parse_bool_option(slot_data, "death_link")
 }
 
+/// `options.no_equip_load` (int-or-bool). Same option name on both our apworld and Bedrock/fswap's.
+pub fn parse_no_equip_load(slot_data: &Value) -> bool {
+    parse_bool_option(slot_data, "no_equip_load")
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -66,5 +71,19 @@ mod tests {
             &json!({ "options": { "x": [1, 2] } }),
             "x"
         ));
+    }
+
+    #[test]
+    fn no_equip_load_parses() {
+        assert!(parse_no_equip_load(
+            &json!({ "options": { "no_equip_load": 1 } })
+        ));
+        assert!(parse_no_equip_load(
+            &json!({ "options": { "no_equip_load": true } })
+        ));
+        assert!(!parse_no_equip_load(
+            &json!({ "options": { "no_equip_load": 0 } })
+        ));
+        assert!(!parse_no_equip_load(&json!({ "options": {} })));
     }
 }
